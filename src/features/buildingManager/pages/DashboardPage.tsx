@@ -259,7 +259,7 @@ export default function DashboardPage() {
         </Grid>
       </Grid>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 4, mt: 1 }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: '16px', mt: 1 }}>
         <Typography variant="caption" color="text.secondary">
           Maintenance Progress Gantt and per-section retry controls are available in the full plan view. Dashboard scoped to assigned buildings only.
         </Typography>

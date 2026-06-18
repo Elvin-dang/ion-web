@@ -152,7 +152,7 @@ export default function DashboardPage() {
                 elevation={2}
                 onClick={() => navigate('/admin/maintenance-plans')}
                 sx={{
-                  borderRadius: 4,
+                  borderRadius: '16px',
                   p: 2.5,
                   cursor: 'pointer',
                   transition: 'box-shadow 0.2s, transform 0.2s',
