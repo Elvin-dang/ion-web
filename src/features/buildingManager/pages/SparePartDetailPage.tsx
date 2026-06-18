@@ -31,6 +31,7 @@ import EmptyState from '../../../components/EmptyState';
 import { SectionCard, DetailField, HistoryLog, KpiCard, useToast } from '../components/shared';
 import { brandTokens } from '../../../theme/theme';
 import { spareParts, stockOutTxns } from '../data/mockData';
+import { formatDateTime } from '../../../utils/date';
 
 export default function SparePartDetailPage() {
   const { id } = useParams();
@@ -53,6 +54,7 @@ export default function SparePartDetailPage() {
 
   const usage = stockOutTxns.filter((t) => t.sparePartCode === part.code);
   const unavailable = part.available <= 0;
+  const lastUpdated = part.history[part.history.length - 1]?.timestamp;
 
   return (
     <Box>
@@ -77,6 +79,9 @@ export default function SparePartDetailPage() {
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 3 }}>
         <StatusChip status={part.status} />
         <Typography variant="body2" color="text.secondary">Code: {part.code}</Typography>
+        {lastUpdated && (
+          <Typography variant="body2" color="text.secondary">Last updated {formatDateTime(lastUpdated)}</Typography>
+        )}
         {unavailable && <StatusChip status="overdue" label="Unavailable" />}
       </Stack>
 
