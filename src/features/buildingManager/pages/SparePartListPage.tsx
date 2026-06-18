@@ -198,7 +198,7 @@ export default function SparePartListPage() {
         actions={<Typography variant="body2" color="text.secondary">{filtered.length} result(s)</Typography>}
       />
 
-      <Box sx={{ height: 520, bgcolor: 'background.paper', borderRadius: 4, p: 1 }}>
+      <Box sx={{ height: 520, bgcolor: 'background.paper', borderRadius: '16px', p: 1 }}>
         <DataGrid
           rows={filtered}
           columns={columns}

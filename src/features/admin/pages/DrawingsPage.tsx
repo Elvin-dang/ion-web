@@ -150,7 +150,7 @@ export default function DrawingsPage() {
               This building has no floors yet. Add floors in Buildings first.
             </Typography>
           ) : !drawing ? (
-            <Paper variant="outlined" sx={{ borderRadius: 3, p: 6, textAlign: 'center', borderStyle: 'dashed' }}>
+            <Paper variant="outlined" sx={{ borderRadius: '16px', p: 6, textAlign: 'center', borderStyle: 'dashed' }}>
               <UploadFileIcon color="action" sx={{ fontSize: 56 }} />
               <Typography sx={{ mt: 1 }} color="text.secondary">No drawing uploaded for {building.name} · {floor.name}.</Typography>
               <Typography variant="caption" color="text.secondary">PDF only · Max 50 MB</Typography>
@@ -166,7 +166,7 @@ export default function DrawingsPage() {
               ref={canvasRef}
               onClick={placeTag}
               sx={{
-                position: 'relative', height: 460, borderRadius: 3, touchAction: 'none',
+                position: 'relative', height: 460, borderRadius: '16px', touchAction: 'none',
                 background: (t) => `repeating-linear-gradient(45deg, ${alpha(t.palette.primary.main, 0.03)}, ${alpha(t.palette.primary.main, 0.03)} 12px, ${alpha(t.palette.primary.main, 0.06)} 12px, ${alpha(t.palette.primary.main, 0.06)} 24px)`,
                 border: '1px solid', borderColor: 'divider', cursor: editMode ? 'crosshair' : 'default', overflow: 'hidden', userSelect: 'none',
               }}

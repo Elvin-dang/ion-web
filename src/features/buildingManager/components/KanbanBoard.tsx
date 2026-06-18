@@ -73,7 +73,7 @@ export default function KanbanBoard({
                 px: 1.5,
                 py: 1,
                 mb: 1.5,
-                borderRadius: 3,
+                borderRadius: '16px',
                 backgroundColor: alpha(color, highlighted ? 0.16 : 0.08),
               }}
             >

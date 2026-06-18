@@ -499,7 +499,7 @@ export const theme = createTheme({
     MuiTabs: {
       styleOverrides: {
         root: { minHeight: 44 },
-        indicator: { height: 3, borderRadius: 3 },
+        indicator: { height: 3, borderRadius: '16px' },
       },
     },
     MuiTab: {

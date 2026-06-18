@@ -85,7 +85,7 @@ export default function MaintenancePlansPage() {
         }
         actions={<Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/admin/maintenance-plans/new')}>Create</Button>}
       />
-      <Paper elevation={2} sx={{ borderRadius: 4, height: 520 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', height: 520 }}>
         <DataGrid rows={rows} columns={cols} getRowId={(r) => r.id} disableRowSelectionOnClick pageSizeOptions={[20]} initialState={{ pagination: { paginationModel: { pageSize: 20 } } }} sx={{ border: 0 }} />
       </Paper>
       {node}

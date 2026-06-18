@@ -388,14 +388,14 @@ function MonthlyProgressTab({ onDownload }: { onDownload: () => void }) {
             <Grid container spacing={2}>
               {keyMetrics.map((m) => (
                 <Grid key={m.label} size={{ xs: 12, md: 4 }}>
-                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, height: '100%' }}>
+                  <Paper variant="outlined" sx={{ p: 2, borderRadius: '16px', height: '100%' }}>
                     <Typography variant="caption" color="text.secondary">{m.label}</Typography>
                     <Typography variant="h6" sx={{ fontWeight: 800, mt: 0.5 }}>{m.value}</Typography>
                   </Paper>
                 </Grid>
               ))}
               <Grid size={{ xs: 12, md: 4 }}>
-                <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, height: '100%' }}>
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: '16px', height: '100%' }}>
                   <Typography variant="caption" color="text.secondary">Recurring Fault Trends (Top 3)</Typography>
                   <Box component="ol" sx={{ pl: 2.5, mt: 0.5, mb: 0, '& li': { mb: 0.25 } }}>
                     {recurringFaults.map((c) => (
@@ -489,7 +489,7 @@ function RoundCompletionTab({ onDownload }: { onDownload: () => void }) {
         ) : (
           <SectionCard title="Round Completion" action={<Button startIcon={<DownloadIcon />} variant="outlined" onClick={onDownload}>Download</Button>}>
             {/* Header block with labelled fields (task 14) */}
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, mb: 3 }}>
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: '16px', mb: 3 }}>
               <Grid container spacing={2}>
                 {headerFields.map((f) => (
                   <Grid key={f.label} size={{ xs: 6, md: 4 }}>
@@ -504,7 +504,7 @@ function RoundCompletionTab({ onDownload }: { onDownload: () => void }) {
             <Grid container spacing={2} sx={{ mb: 3 }}>
               {summary.map((k) => (
                 <Grid key={k.label} size={{ xs: 6, md: 3 }}>
-                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, textAlign: 'center' }}>
+                  <Paper variant="outlined" sx={{ p: 2, borderRadius: '16px', textAlign: 'center' }}>
                     <Typography variant="h5" sx={{ fontWeight: 800 }}>{k.value}</Typography>
                     <Typography variant="caption" color="text.secondary">{k.label}</Typography>
                   </Paper>
@@ -517,7 +517,7 @@ function RoundCompletionTab({ onDownload }: { onDownload: () => void }) {
             <Grid container spacing={2} sx={{ mb: 3 }}>
               {roundAssetResults.map((r) => (
                 <Grid key={r.assetId} size={{ xs: 12 }}>
-                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+                  <Paper variant="outlined" sx={{ p: 2, borderRadius: '16px' }}>
                     <Grid container spacing={2}>
                       <Grid size={{ xs: 6, md: 2.4 }}>
                         <Typography variant="caption" color="text.secondary">Asset ID</Typography>
@@ -600,7 +600,7 @@ export default function ReportsPage() {
   return (
     <Box>
       <PageHeader title="Reports & Report Builder" subtitle="Maintenance trends and downloadable progress reports." />
-      <Paper elevation={2} sx={{ borderRadius: 4, mb: 2.5 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', mb: 2.5 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ px: 1 }}>
           <Tab label="Maintenance Trend" />
           <Tab label="Maintenance Progress" />

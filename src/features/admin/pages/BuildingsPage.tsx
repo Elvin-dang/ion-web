@@ -216,7 +216,7 @@ export default function BuildingsPage() {
       <Grid container spacing={2.5}>
         {/* left list */}
         <Grid size={{ xs: 12, md: 4 }}>
-          <Paper elevation={2} sx={{ borderRadius: 4, p: 2 }}>
+          <Paper elevation={2} sx={{ borderRadius: '16px', p: 2 }}>
             <Typography variant="subtitle2" sx={{ mb: 1.5 }}>{filtered.length} buildings</Typography>
             <TextField
               fullWidth size="small" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)}
@@ -258,7 +258,7 @@ export default function BuildingsPage() {
 
         {/* right detail */}
         <Grid size={{ xs: 12, md: 8 }}>
-          <Paper elevation={2} sx={{ borderRadius: 4, p: 2.5, minHeight: 420 }}>
+          <Paper elevation={2} sx={{ borderRadius: '16px', p: 2.5, minHeight: 420 }}>
             {!selected ? (
               <EmptyState icon={<ApartmentIcon />} title="Select a building to view details" description="Pick a building from the list to manage its floors, areas and drawing." />
             ) : (
@@ -335,7 +335,7 @@ export default function BuildingsPage() {
                             key={f.id}
                             variant="outlined"
                             sx={{
-                              borderRadius: 3, p: 2, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap',
+                              borderRadius: '16px', p: 2, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap',
                               borderStyle: f.hasDrawing ? 'solid' : 'dashed',
                               backgroundColor: (t) => (f.hasDrawing ? alpha(t.palette.primary.main, 0.04) : 'transparent'),
                             }}
@@ -400,7 +400,7 @@ export default function BuildingsPage() {
                     ) : (
                       <Stack spacing={1}>
                         {managers(selected).map((u) => u && (
-                          <Paper key={u.id} variant="outlined" sx={{ borderRadius: 2, p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                          <Paper key={u.id} variant="outlined" sx={{ borderRadius: '16px', p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                             <Box sx={{ flex: 1, minWidth: 180 }}>
                               <Typography fontWeight={600}>{u.fullName}</Typography>
                               <Typography variant="caption" color="text.secondary">{u.email}</Typography>
@@ -422,7 +422,7 @@ export default function BuildingsPage() {
                           if (!u) return null;
                           const grp = supervisorGroup(u.id);
                           return (
-                            <Paper key={u.id} variant="outlined" sx={{ borderRadius: 2, p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                            <Paper key={u.id} variant="outlined" sx={{ borderRadius: '16px', p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                               <Box sx={{ flex: 1, minWidth: 180 }}>
                                 <Typography fontWeight={600}>{u.fullName}</Typography>
                                 <Typography variant="caption" color="text.secondary" display="block">
@@ -452,7 +452,7 @@ export default function BuildingsPage() {
                       <Grid container spacing={1.5}>
                         {systemsInBuilding(selected).map((s) => (
                           <Grid key={s.systemId} size={{ xs: 12, sm: 6 }}>
-                            <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5, height: '100%' }}>
+                            <Paper variant="outlined" sx={{ borderRadius: '16px', p: 1.5, height: '100%' }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                                 <Typography fontWeight={700}>{systemName(s.systemId)}</Typography>
                                 <Chip size="small" label={`${s.count} asset${s.count === 1 ? '' : 's'}`} />

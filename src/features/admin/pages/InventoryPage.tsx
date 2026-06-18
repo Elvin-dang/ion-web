@@ -79,7 +79,7 @@ function PartsTab() {
         search={search} onSearchChange={setSearch} searchPlaceholder="Search by ID or asset name"
         actions={<Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/admin/inventory/parts/new')}>Create</Button>}
       />
-      <Paper elevation={2} sx={{ borderRadius: 4, height: 500 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', height: 500 }}>
         <DataGrid rows={rows} columns={cols} getRowId={(r) => r.id} disableRowSelectionOnClick pageSizeOptions={[20]} initialState={{ pagination: { paginationModel: { pageSize: 20 } } }} sx={{ border: 0 }} />
       </Paper>
       <ConfirmDialog
@@ -134,7 +134,7 @@ function CategoriesTab() {
     <Box>
       <DataTableToolbar search={search} onSearchChange={setSearch} searchPlaceholder="Search by name or code"
         actions={<Button variant="contained" startIcon={<AddIcon />} onClick={() => { setForm({}); setErr({}); setDialog({ mode: 'create' }); }}>New Category</Button>} />
-      <Paper elevation={2} sx={{ borderRadius: 4, height: 480 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', height: 480 }}>
         <DataGrid rows={rows} columns={cols} getRowId={(r) => r.id} disableRowSelectionOnClick pageSizeOptions={[20]} initialState={{ pagination: { paginationModel: { pageSize: 20 } } }} sx={{ border: 0 }} />
       </Paper>
       <Dialog open={!!dialog} onClose={() => setDialog(null)} maxWidth="xs" fullWidth>
@@ -190,7 +190,7 @@ function StockInTab() {
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setForm({ partId: '', quantity: '', date: '2026-06-17', reference: '' }); setErr({}); setDialog(true); }}>New Stock-In</Button>
       </Box>
-      <Paper elevation={2} sx={{ borderRadius: 4, height: 480 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', height: 480 }}>
         <DataGrid rows={records} columns={cols} getRowId={(r) => r.id} disableRowSelectionOnClick pageSizeOptions={[20]} initialState={{ pagination: { paginationModel: { pageSize: 20 } } }} sx={{ border: 0 }} />
       </Paper>
       <Dialog open={dialog} onClose={() => setDialog(false)} maxWidth="xs" fullWidth>
@@ -224,7 +224,7 @@ function StockOutTab() {
     { field: 'status', headerName: 'Status', width: 110, renderCell: (p) => <AdminStatusChip status={p.value as string} /> },
   ];
   return (
-    <Paper elevation={2} sx={{ borderRadius: 4, height: 500 }}>
+    <Paper elevation={2} sx={{ borderRadius: '16px', height: 500 }}>
       <DataGrid rows={stockOutRecords} columns={cols} getRowId={(r) => r.id} disableRowSelectionOnClick pageSizeOptions={[20]} initialState={{ pagination: { paginationModel: { pageSize: 20 } } }} sx={{ border: 0 }} />
     </Paper>
   );
@@ -244,7 +244,7 @@ function OnHoldTab() {
   ];
   return (
     <Box>
-      <Paper elevation={2} sx={{ borderRadius: 4, height: 500 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', height: 500 }}>
         <DataGrid rows={records} columns={cols} getRowId={(r) => r.id} disableRowSelectionOnClick pageSizeOptions={[20]} initialState={{ pagination: { paginationModel: { pageSize: 20 } } }} sx={{ border: 0 }} />
       </Paper>
       <ConfirmDialog open={!!release} title="Release reservation" confirmLabel="Confirm"
@@ -269,7 +269,7 @@ function UnavailableTab() {
   return (
     <Box>
       <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>Read-only monitoring view. BM actions (Approve Continuation / Wait for Restock) are taken in the BM portal.</Alert>
-      <Paper elevation={2} sx={{ borderRadius: 4, height: 460 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', height: 460 }}>
         <DataGrid rows={unavailableRecords} columns={cols} getRowId={(r) => r.id} disableRowSelectionOnClick pageSizeOptions={[20]} initialState={{ pagination: { paginationModel: { pageSize: 20 } } }} sx={{ border: 0 }} />
       </Paper>
     </Box>
@@ -288,7 +288,7 @@ function UsageTab() {
     { field: 'technician', headerName: 'Technician', width: 150 },
   ];
   return (
-    <Paper elevation={2} sx={{ borderRadius: 4, height: 500 }}>
+    <Paper elevation={2} sx={{ borderRadius: '16px', height: 500 }}>
       <DataGrid rows={usageRecords} columns={cols} getRowId={(r) => r.id} disableRowSelectionOnClick pageSizeOptions={[20]} initialState={{ pagination: { paginationModel: { pageSize: 20 } } }} sx={{ border: 0 }} />
     </Paper>
   );
@@ -299,7 +299,7 @@ export default function InventoryPage() {
   return (
     <Box>
       <PageHeader title="Inventory" subtitle="Spare parts, categories and stock transactions." />
-      <Paper elevation={2} sx={{ borderRadius: 4, mb: 2.5 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', mb: 2.5 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ px: 1 }}>
           <Tab label="Spare Parts" /><Tab label="Categories" /><Tab label="Stock-In" /><Tab label="Stock-Out" /><Tab label="On-Hold" /><Tab label="Unavailable" /><Tab label="Usage per WO" />
         </Tabs>

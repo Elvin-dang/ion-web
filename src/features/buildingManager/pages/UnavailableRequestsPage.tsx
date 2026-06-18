@@ -158,7 +158,7 @@ export default function UnavailableRequestsPage() {
         }
       />
 
-      <Box sx={{ height: 480, bgcolor: 'background.paper', borderRadius: 4, p: 1 }}>
+      <Box sx={{ height: 480, bgcolor: 'background.paper', borderRadius: '16px', p: 1 }}>
         <DataGrid
           rows={filtered}
           columns={columns}

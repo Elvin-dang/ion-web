@@ -150,7 +150,7 @@ function UsersTab() {
         actions={<Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>New User</Button>}
       />
       <Typography variant="caption" color="text.secondary">{rows.length} results</Typography>
-      <Paper elevation={2} sx={{ borderRadius: 4, mt: 1, height: 520 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', mt: 1, height: 520 }}>
         <DataGrid
           rows={rows} columns={cols} getRowId={(r) => r.id} disableRowSelectionOnClick
           pageSizeOptions={[20]} initialState={{ pagination: { paginationModel: { pageSize: 20 } } }}
@@ -262,7 +262,7 @@ function GroupsTab() {
         <Typography color="text.secondary" sx={{ p: 3 }}>No user groups found. Click New Group to create one.</Typography>
       ) : (
         rows.map((g) => (
-          <Paper key={g.id} elevation={2} sx={{ borderRadius: 3, mb: 1.5, overflow: 'hidden' }}>
+          <Paper key={g.id} elevation={2} sx={{ borderRadius: '16px', mb: 1.5, overflow: 'hidden' }}>
             <Box
               onClick={() => setOpenId(openId === g.id ? null : g.id)}
               sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, cursor: 'pointer', flexWrap: 'wrap' }}
@@ -330,7 +330,7 @@ export default function UsersPage() {
   return (
     <Box>
       <PageHeader title="User Management" subtitle="Users, predefined roles and user groups." />
-      <Paper elevation={2} sx={{ borderRadius: 4, mb: 2.5 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', mb: 2.5 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ px: 1 }}>
           <Tab label="Users" />
           <Tab label="Roles" />

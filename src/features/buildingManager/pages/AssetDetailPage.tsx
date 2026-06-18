@@ -111,7 +111,7 @@ export default function AssetDetailPage() {
         <Grid size={{ xs: 12, md: 4 }}>
           <SectionCard title="QR Code">
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-              <Box sx={(t) => ({ width: 160, height: 160, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: alpha(t.palette.primary.main, 0.08), color: 'primary.main' })}>
+              <Box sx={(t) => ({ width: 160, height: 160, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: alpha(t.palette.primary.main, 0.08), color: 'primary.main' })}>
                 <QrCode2Icon sx={{ fontSize: 120 }} />
               </Box>
             </Box>
@@ -310,7 +310,7 @@ export default function AssetDetailPage() {
                 sx={(t) => ({
                   position: 'relative',
                   height: 420,
-                  borderRadius: 3,
+                  borderRadius: '16px',
                   cursor: placing ? 'crosshair' : 'default',
                   backgroundColor: alpha(t.palette.primary.main, 0.04),
                   backgroundImage: `linear-gradient(${alpha(t.palette.divider, 0.6)} 1px, transparent 1px), linear-gradient(90deg, ${alpha(t.palette.divider, 0.6)} 1px, transparent 1px)`,

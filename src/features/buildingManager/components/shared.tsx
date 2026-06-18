@@ -22,7 +22,7 @@ export function HoverCard({ children, sx, onClick }: { children: ReactNode; sx?:
       elevation={0}
       sx={{
         p: 2.5,
-        borderRadius: 4,
+        borderRadius: '16px',
         cursor: onClick ? 'pointer' : 'default',
         transition: 'box-shadow 0.2s ease, transform 0.2s ease',
         '&:hover': onClick
@@ -47,7 +47,7 @@ export function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <Paper elevation={0} sx={{ p: 3, borderRadius: 4, mb: 3 }}>
+    <Paper elevation={0} sx={{ p: 3, borderRadius: '16px', mb: 3 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h6">{title}</Typography>
         {action}
@@ -92,7 +92,7 @@ export function KpiCard({
           sx={{
             width: 48,
             height: 48,
-            borderRadius: 3,
+            borderRadius: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -174,7 +174,7 @@ export function useToast() {
       onClose={close}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
     >
-      <Alert onClose={close} severity={state.severity} variant="filled" sx={{ borderRadius: 3 }}>
+      <Alert onClose={close} severity={state.severity} variant="filled" sx={{ borderRadius: '16px' }}>
         {state.message}
       </Alert>
     </Snackbar>

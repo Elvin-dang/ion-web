@@ -106,7 +106,7 @@ export default function AssetClassificationPage() {
       <PageHeader title="Asset Systems" subtitle="Organize asset systems and sub-systems." />
       <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Paper elevation={2} sx={{ borderRadius: 4, p: 2 }}>
+          <Paper elevation={2} sx={{ borderRadius: '16px', p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
               <Typography variant="subtitle1" fontWeight={700}>System</Typography>
               <IconButton color="primary" onClick={() => openSys('create')}><AddIcon /></IconButton>
@@ -133,7 +133,7 @@ export default function AssetClassificationPage() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Paper elevation={2} sx={{ borderRadius: 4, p: 2 }}>
+          <Paper elevation={2} sx={{ borderRadius: '16px', p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
               <Typography variant="subtitle1" fontWeight={700}>Sub-system</Typography>
               <IconButton color="primary" onClick={() => openSub('create')}><AddIcon /></IconButton>

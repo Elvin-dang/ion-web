@@ -64,7 +64,7 @@ export default function SubmissionConfirmation({
             px: 4,
             py: 2.5,
             mb: 3,
-            borderRadius: 3,
+            borderRadius: '16px',
             border: `1px dashed ${alpha(theme.palette.primary.main, 0.5)}`,
             backgroundColor: alpha(theme.palette.primary.main, 0.06),
           })}

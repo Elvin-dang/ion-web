@@ -104,7 +104,7 @@ export default function UserGroupFormPage() {
               const floors = bld?.floors ?? [];
               const areas = entry.floorId && entry.floorId !== 'All' ? (floors.find((f) => f.id === entry.floorId)?.areas ?? []) : [];
               return (
-                <Paper key={entry.id} variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+                <Paper key={entry.id} variant="outlined" sx={{ p: 1.5, borderRadius: '16px' }}>
                   <Grid container spacing={1.5} alignItems="center">
                     <Grid size={{ xs: 12, sm: 4 }}>
                       <TextField select size="small" label="Building" fullWidth value={entry.buildingId}
@@ -149,7 +149,7 @@ export default function UserGroupFormPage() {
               const subs = entry.systemId ? assetSubsystems.filter((s) => s.systemId === entry.systemId) : [];
               const types = entry.subsystemId && entry.subsystemId !== 'All' ? assetTypes.filter((t) => t.subsystemId === entry.subsystemId) : [];
               return (
-                <Paper key={entry.id} variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+                <Paper key={entry.id} variant="outlined" sx={{ p: 1.5, borderRadius: '16px' }}>
                   <Grid container spacing={1.5} alignItems="center">
                     <Grid size={{ xs: 12, sm: 4 }}>
                       <TextField select size="small" label="System" fullWidth value={entry.systemId}
@@ -199,7 +199,7 @@ export default function UserGroupFormPage() {
               const u = users.find((x) => x.id === m);
               return (
                 <Grid key={m} size={{ xs: 12, sm: 6 }}>
-                  <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2, display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                  <Paper variant="outlined" sx={{ p: 1.5, borderRadius: '16px', display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                     <Avatar src={u?.avatarUrl || undefined} sx={{ width: 44, height: 44, fontSize: 16 }}>{initials(u?.fullName ?? userName(m))}</Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap' }}>

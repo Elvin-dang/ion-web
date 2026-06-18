@@ -185,7 +185,7 @@ export default function DrawingsPage() {
       <Grid container spacing={3}>
         {/* LEFT: building list (scoped to assigned buildings, no New Building) */}
         <Grid size={{ xs: 12, md: 3 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, p: 2 }}>
+          <Paper elevation={0} sx={{ borderRadius: '16px', p: 2 }}>
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
               My Buildings
             </Typography>
@@ -261,7 +261,7 @@ export default function DrawingsPage() {
                   sx={(t) => ({
                     position: 'relative',
                     height: 460,
-                    borderRadius: 3,
+                    borderRadius: '16px',
                     overflow: 'hidden',
                     border: `1px solid ${t.palette.divider}`,
                     backgroundColor: alpha(t.palette.text.primary, 0.02),

@@ -102,7 +102,7 @@ export default function SparePartDetailPage() {
                  ['Available', available, theme.palette.success.main],
                  ['On-Hold', part.onHold, theme.palette.warning.main]] as const).map(([k, v, color]) => (
                 <Grid key={k} size={{ xs: 4 }}>
-                  <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 3, textAlign: 'center' }}>
+                  <Paper variant="outlined" sx={{ p: 1.5, borderRadius: '16px', textAlign: 'center' }}>
                     <Typography variant="h5" fontWeight={800} sx={{ color }}>{v}</Typography>
                     <Typography variant="caption" color="text.secondary">{k}</Typography>
                   </Paper>

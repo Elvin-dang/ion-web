@@ -19,7 +19,7 @@ export default function SectionCard({ title, action, children, noPad }: SectionC
     <Paper
       elevation={2}
       sx={{
-        borderRadius: 4,
+        borderRadius: '16px',
         p: noPad ? 0 : { xs: 2, sm: 2.5 },
         transition: 'box-shadow 0.2s ease, transform 0.2s ease',
         '&:hover': { boxShadow: 6 },

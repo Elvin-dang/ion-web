@@ -88,7 +88,7 @@ export default function AssetTypesPage() {
         }
         actions={<Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/admin/asset-types/new')}>Add</Button>}
       />
-      <Paper elevation={2} sx={{ borderRadius: 4, height: 520 }}>
+      <Paper elevation={2} sx={{ borderRadius: '16px', height: 520 }}>
         <DataGrid rows={rows} columns={cols} getRowId={(r) => r.id} disableRowSelectionOnClick pageSizeOptions={[20]} initialState={{ pagination: { paginationModel: { pageSize: 20 } } }} sx={{ border: 0 }} />
       </Paper>
       {node}

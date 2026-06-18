@@ -107,7 +107,7 @@ export default function AssetTypeFormPage() {
           ) : (
             <Stack spacing={1.5}>
               {checklist.map((c, i) => (
-                <Paper key={c.id} variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+                <Paper key={c.id} variant="outlined" sx={{ p: 2, borderRadius: '16px' }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.5 }}>
                     <Typography fontWeight={600} sx={{ pt: 2 }}>{i + 1}.</Typography>
                     <TextField
