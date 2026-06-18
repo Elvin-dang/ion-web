@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "saigon-technology-solutions"
+  },
+  "targets": {
+    "saigon-technology-solutions": {
+      "hosting": {
+        "i-on-portal": [
+          "i-on-portal"
+        ]
+      }
+    }
+  }
+}
