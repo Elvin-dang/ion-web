@@ -1,0 +1,12 @@
+/* Minimal global reset — all visual styling lives in the MUI theme. */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+}
