@@ -19,9 +19,11 @@ export default function ThemeToggle() {
   const { mode, setMode } = useColorScheme();
   const [mounted, setMounted] = useState(false);
 
-  // Avoid hydration / first-paint mismatch: render nothing until mounted,
-  // since `mode` is undefined on the server / before hydration.
+  // Avoid first-paint mismatch: render nothing until mounted, since `mode` is
+  // undefined before the color-scheme provider resolves. This one-shot mount
+  // flag is the intended use of a synchronous setState in a mount effect.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

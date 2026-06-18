@@ -153,6 +153,7 @@ export function HistoryLog({ entries }: { entries: HistoryEntry[] }) {
 }
 
 /** Lightweight toast hook used across BM screens for success/error feedback. */
+// eslint-disable-next-line react-refresh/only-export-components -- shared BM helpers co-located by design
 export function useToast() {
   const [state, setState] = useState<{ open: boolean; message: string; severity: AlertColor }>({
     open: false,

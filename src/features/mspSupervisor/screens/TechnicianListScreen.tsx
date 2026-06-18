@@ -34,10 +34,6 @@ import { useToast } from '../components/useToast';
 import { SUPERVISOR_PROFILE, technicians as seedTechnicians } from '../data/mockData';
 import type { AccountStatus, Technician } from '../data/types';
 
-// Monotonic id seed for newly-created technicians (mock only). Kept at module
-// scope so render stays pure — no Date.now()/Math.random() in the component.
-let techIdSeq = 0;
-
 const techSchema = z.object({
   email: z.string().min(1, 'Email is required.').email('Please enter a valid email address.').max(100),
   fullName: z.string().min(1, 'Full name is required.').max(100),
@@ -95,22 +91,27 @@ export default function TechnicianListScreen() {
       );
       toast('MSP Technician account updated successfully.');
     } else {
-      techIdSeq += 1;
-      const newTech: Technician = {
-        id: `tech-new-${techIdSeq}`,
-        name: data.fullName,
-        email: data.email,
-        phone: data.phone ?? '',
-        level: data.level ?? '',
-        workShift: data.workShift ?? '',
-        team: data.team ?? '',
-        status: 'Pending',
-        userGroup: SUPERVISOR_PROFILE.userGroup,
-        createdDate: new Date().toISOString().slice(0, 10),
-        avatar: '',
-        activeWoCount: 0,
-      };
-      setRows((prev) => [newTech, ...prev]);
+      // Derive a unique id from existing rows inside the state updater so render
+      // stays pure (no Date.now / module var / ref access).
+      setRows((prev) => {
+        const nextNum =
+          prev.reduce((max, t) => Math.max(max, Number(/\d+$/.exec(t.id)?.[0] ?? 0)), 0) + 1;
+        const newTech: Technician = {
+          id: `tech-new-${nextNum}`,
+          name: data.fullName,
+          email: data.email,
+          phone: data.phone ?? '',
+          level: data.level ?? '',
+          workShift: data.workShift ?? '',
+          team: data.team ?? '',
+          status: 'Pending',
+          userGroup: SUPERVISOR_PROFILE.userGroup,
+          createdDate: new Date().toISOString().slice(0, 10),
+          avatar: '',
+          activeWoCount: 0,
+        };
+        return [newTech, ...prev];
+      });
       toast(`Account created. Invitation sent to ${data.email}.`);
     }
     setDrawerOpen(false);
