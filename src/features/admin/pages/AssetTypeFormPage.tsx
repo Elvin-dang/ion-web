@@ -36,6 +36,7 @@ export default function AssetTypeFormPage() {
   const [code, setCode] = useState(existing?.code ?? '');
   const [sys, setSys] = useState(existing?.systemId ?? '');
   const [sub, setSub] = useState(existing?.subsystemId ?? '');
+  const [description, setDescription] = useState(existing?.description ?? '');
   const [status, setStatus] = useState<ActiveStatus>(existing?.status ?? 'Active');
   const [checklist, setChecklist] = useState<ChecklistItem[]>(existing?.checklist.map((c) => ({ ...c })) ?? []);
   const [newItem, setNewItem] = useState('');
@@ -93,6 +94,9 @@ export default function AssetTypeFormPage() {
               <TextField select label="Status" fullWidth value={status} onChange={(e) => setStatus(e.target.value as ActiveStatus)}>
                 <MenuItem value="Active">Active</MenuItem><MenuItem value="Inactive">Inactive</MenuItem>
               </TextField>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField label="Description" fullWidth multiline minRows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
             </Grid>
           </Grid>
         </SectionCard>

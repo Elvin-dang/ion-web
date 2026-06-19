@@ -1,30 +1,22 @@
 /**
- * 5.4.2 View Asset Detail (MSP Supervisor — Read-only). Classification, location,
- * details + Maintenance History (5.5.5), Related WO History and Pending WO
- * tables. All WO IDs deep-link to WO Detail (5.3.3). No edit/deactivate.
+ * 5.4.2 View Asset Detail (MSP Supervisor — Read-only). Renders the shared
+ * AssetDetailView. MSP is read-only: the only header action is Download QR (no
+ * edit, no deactivate). All WO IDs deep-link to WO Detail (5.3.3).
  */
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
 import DownloadIcon from '@mui/icons-material/Download';
 import PageHeader from '../../../components/PageHeader';
-import SectionCard from '../components/SectionCard';
-import InfoField from '../components/InfoField';
 import StatusChip from '../../../components/StatusChip';
 import EmptyState from '../../../components/EmptyState';
+import AssetDetailView from '../../../components/AssetDetailView';
+import type { AssetDetailViewModel } from '../../../components/AssetDetailView';
 import { useToast } from '../components/useToast';
 import { formatDate } from '../../../utils/date';
 import { assets, maintenancePlanById, technicianName, workOrders } from '../data/mockData';
@@ -54,6 +46,59 @@ export default function AssetDetailScreen() {
     </Link>
   );
 
+  const vm: AssetDetailViewModel = {
+    name: asset.name,
+    qrCaption: asset.qrCode,
+    statusChip: <StatusChip status={asset.status} />,
+    classification: [
+      { label: 'Asset System', value: asset.assetSystem },
+      { label: 'Sub-system', value: asset.subSystem },
+      { label: 'Asset Type', value: asset.assetType },
+    ],
+    location: [
+      { label: 'Building', value: asset.building },
+      { label: 'Floor', value: asset.floor },
+      { label: 'Area / Unit', value: asset.area },
+    ],
+    details: [
+      { label: 'Asset Code', value: asset.code },
+      { label: 'Model', value: asset.model },
+      { label: 'Serial Number', value: asset.serialNumber },
+      { label: 'Brand', value: asset.brand },
+      { label: 'Purchase Date', value: formatDate(asset.purchaseDate) },
+      { label: 'Manufactured Date', value: formatDate(asset.manufacturedDate) },
+      { label: 'Status', value: <StatusChip status={asset.status} /> },
+    ],
+    maintenanceHistory: {
+      headers: ['WO ID', 'Plan Name', 'Round', 'Completed Date', 'Technician', 'Status'],
+      rows: maintenanceWos.map((w) => [
+        woLink(w.id),
+        (w.maintenancePlanId && maintenancePlanById(w.maintenancePlanId)?.name) || '-',
+        w.maintenanceRound,
+        formatDate(w.endTime),
+        technicianName(w.mainTechnicianId),
+        <StatusChip key={w.id} status={w.status} />,
+      ]),
+      empty: 'No maintenance history.',
+    },
+    relatedWorkOrders: {
+      headers: ['WO ID', 'Type', 'Created Date', 'Status', 'Technician'],
+      rows: relatedWos.map((w) => [
+        woLink(w.id),
+        w.type,
+        formatDate(w.createdDate),
+        <StatusChip key={w.id} status={w.status} />,
+        technicianName(w.mainTechnicianId),
+      ]),
+      empty: 'No related work orders.',
+    },
+    pendingWorkOrders: {
+      headers: ['WO ID', 'Type', 'Status'],
+      rows: pendingWos.map((w) => [woLink(w.id), w.type, <StatusChip key={w.id} status={w.status} />]),
+      empty: 'No pending work orders.',
+    },
+  };
+
   return (
     <Box>
       <PageHeader
@@ -70,167 +115,14 @@ export default function AssetDetailScreen() {
         }
       />
 
-      <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Stack spacing={2.5}>
-            <SectionCard title="QR Code">
-              <Stack alignItems="center" spacing={1}>
-                <Box sx={{ width: 120, height: 120, borderRadius: 2, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <QrCode2Icon sx={{ fontSize: 80, color: 'text.secondary' }} />
-                </Box>
-                <Typography variant="caption" color="text.secondary">
-                  {asset.qrCode}
-                </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<DownloadIcon />}
-                  onClick={() => toast('QR code downloaded.')}
-                >
-                  Download QR
-                </Button>
-              </Stack>
-            </SectionCard>
-            <SectionCard title="Classification">
-              <InfoField label="Asset System" value={asset.assetSystem} />
-              <InfoField label="Asset Sub-system" value={asset.subSystem} />
-              <InfoField label="Asset Type" value={asset.assetType} />
-            </SectionCard>
-            <SectionCard title="Location">
-              <InfoField label="Building" value={asset.building} />
-              <InfoField label="Floor" value={asset.floor} />
-              <InfoField label="Area / Unit" value={asset.area} />
-            </SectionCard>
-          </Stack>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Stack spacing={2.5}>
-            <SectionCard title="Asset Details">
-              <Grid container spacing={1}>
-                <Grid size={{ xs: 6, sm: 4 }}>
-                  <InfoField label="Asset Code" value={asset.code} />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 4 }}>
-                  <InfoField label="Model" value={asset.model} />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 4 }}>
-                  <InfoField label="Serial Number" value={asset.serialNumber} />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 4 }}>
-                  <InfoField label="Brand" value={asset.brand} />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 4 }}>
-                  <InfoField label="Purchase Date" value={formatDate(asset.purchaseDate)} />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 4 }}>
-                  <InfoField label="Manufactured Date" value={formatDate(asset.manufacturedDate)} />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 4 }}>
-                  <InfoField label="Status" value={<StatusChip status={asset.status} />} />
-                </Grid>
-              </Grid>
-            </SectionCard>
-
-            <SectionCard title="Maintenance History">
-              {maintenanceWos.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  No maintenance history.
-                </Typography>
-              ) : (
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>WO ID</TableCell>
-                      <TableCell>Plan Name</TableCell>
-                      <TableCell>Round</TableCell>
-                      <TableCell>Completed Date</TableCell>
-                      <TableCell>Technician</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {maintenanceWos.map((w) => (
-                      <TableRow key={w.id} hover>
-                        <TableCell>{woLink(w.id)}</TableCell>
-                        <TableCell>{(w.maintenancePlanId && maintenancePlanById(w.maintenancePlanId)?.name) || '-'}</TableCell>
-                        <TableCell>{w.maintenanceRound}</TableCell>
-                        <TableCell>{formatDate(w.endTime)}</TableCell>
-                        <TableCell>{technicianName(w.mainTechnicianId)}</TableCell>
-                        <TableCell>
-                          <StatusChip status={w.status} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </SectionCard>
-
-            <SectionCard title="Related Work Order History">
-              {relatedWos.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  No related work orders.
-                </Typography>
-              ) : (
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>WO ID</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Created Date</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Technician</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {relatedWos.map((w) => (
-                      <TableRow key={w.id} hover>
-                        <TableCell>{woLink(w.id)}</TableCell>
-                        <TableCell>{w.type}</TableCell>
-                        <TableCell>{formatDate(w.createdDate)}</TableCell>
-                        <TableCell>
-                          <StatusChip status={w.status} />
-                        </TableCell>
-                        <TableCell>{technicianName(w.mainTechnicianId)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </SectionCard>
-
-            <SectionCard title="Pending Work Orders">
-              {pendingWos.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  No pending work orders.
-                </Typography>
-              ) : (
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>WO ID</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {pendingWos.map((w) => (
-                      <TableRow key={w.id} hover>
-                        <TableCell>{woLink(w.id)}</TableCell>
-                        <TableCell>{w.type}</TableCell>
-                        <TableCell>
-                          <StatusChip status={w.status} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </SectionCard>
-          </Stack>
-        </Grid>
-      </Grid>
+      <AssetDetailView
+        vm={vm}
+        actions={
+          <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={() => toast('QR code downloaded.')}>
+            Download QR
+          </Button>
+        }
+      />
       {toastElement}
     </Box>
   );

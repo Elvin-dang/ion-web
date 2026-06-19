@@ -33,7 +33,6 @@ import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
-import Divider from '@mui/material/Divider';
 import Autocomplete from '@mui/material/Autocomplete';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
@@ -107,8 +106,9 @@ export default function WorkOrderDetailScreen() {
   const initial = useMemo(() => workOrderById(id ?? ''), [id]);
   const [wo, setWo] = useState<WorkOrder | undefined>(initial);
 
-  // Dialog state
-  const [assignOpen, setAssignOpen] = useState(false);
+  // Dialog state — Main & Sub technicians are edited separately
+  const [mainTechOpen, setMainTechOpen] = useState(false);
+  const [subTechOpen, setSubTechOpen] = useState(false);
   const [mainTech, setMainTech] = useState('');
   const [subTechs, setSubTechs] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState('');
@@ -166,26 +166,63 @@ export default function WorkOrderDetailScreen() {
   const setStatus = (status: WorkOrderStatus, log: string) =>
     setWo((prev) => (prev ? { ...prev, status, history: [...prev.history, { timestamp: new Date().toISOString().slice(0, 16).replace('T', ' '), label: log }] } : prev));
 
-  // ---- 5.3.5 Assign ----
-  const handleAssign = () => {
+  // ---- 5.3.5 Main Technician (add / edit) ----
+  const openMainTechDialog = () => {
+    setMainTech(wo.mainTechnicianId ?? '');
+    setDueDate(wo.dueDate ?? '');
+    setAssignNotes('');
+    setMainTechOpen(true);
+  };
+  const handleSaveMainTech = () => {
     if (!mainTech) {
       toast('Please select a Main Technician.', 'error');
       return;
     }
+    // First-time assignment of an unassigned WO drives the Assigned transition.
+    const firstAssign = wo.status === 'Pending - Unassigned';
     setWo((prev) =>
       prev
         ? {
             ...prev,
-            status: 'Assigned',
+            status: firstAssign ? 'Assigned' : prev.status,
             mainTechnicianId: mainTech,
-            subTechnicianIds: subTechs,
             dueDate: dueDate || prev.dueDate,
-            history: [...prev.history, { timestamp: new Date().toISOString().slice(0, 16).replace('T', ' '), label: `Assigned to ${technicianName(mainTech)} by Marcus Delgado.` }],
+            history: [
+              ...prev.history,
+              {
+                timestamp: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                label: firstAssign
+                  ? `Assigned to ${technicianName(mainTech)} by Marcus Delgado.`
+                  : `Main Technician changed to ${technicianName(mainTech)} by Marcus Delgado.`,
+              },
+            ],
           }
         : prev,
     );
-    toast(`Work order assigned to ${technicianName(mainTech)}.`);
-    setAssignOpen(false);
+    toast(firstAssign ? `Work order assigned to ${technicianName(mainTech)}.` : `Main Technician set to ${technicianName(mainTech)}.`);
+    setMainTechOpen(false);
+  };
+
+  // ---- 5.3.5 Sub Technicians (add / edit) ----
+  const openSubTechDialog = () => {
+    setSubTechs(wo.subTechnicianIds);
+    setSubTechOpen(true);
+  };
+  const handleSaveSubTechs = () => {
+    setWo((prev) =>
+      prev
+        ? {
+            ...prev,
+            subTechnicianIds: subTechs,
+            history: [
+              ...prev.history,
+              { timestamp: new Date().toISOString().slice(0, 16).replace('T', ' '), label: 'Sub Technicians updated by Marcus Delgado.' },
+            ],
+          }
+        : prev,
+    );
+    toast('Sub Technicians updated.');
+    setSubTechOpen(false);
   };
 
   // ---- 5.3.7 Sign off ----
@@ -332,7 +369,7 @@ export default function WorkOrderDetailScreen() {
   const actions: React.ReactNode[] = [];
   if (wo.status === 'Pending - Unassigned') {
     actions.push(
-      <Button key="assign" variant="contained" startIcon={<SendIcon />} onClick={() => setAssignOpen(true)}>
+      <Button key="assign" variant="contained" startIcon={<SendIcon />} onClick={openMainTechDialog}>
         Send to Technician
       </Button>,
     );
@@ -626,7 +663,18 @@ export default function WorkOrderDetailScreen() {
 
         <Grid size={{ xs: 12, md: 4 }}>
           <Stack spacing={2.5}>
-            <SectionCard title="Main Technician">
+            <SectionCard
+              title="Main Technician"
+              action={
+                <Button
+                  size="small"
+                  startIcon={wo.mainTechnicianId ? <EditIcon /> : <AddIcon />}
+                  onClick={openMainTechDialog}
+                >
+                  {wo.mainTechnicianId ? 'Edit' : 'Add'}
+                </Button>
+              }
+            >
               {wo.mainTechnicianId ? (
                 (() => {
                   const t = technicians.find((x) => x.id === wo.mainTechnicianId)!;
@@ -650,15 +698,16 @@ export default function WorkOrderDetailScreen() {
                   Unassigned
                 </Typography>
               )}
-              <Divider sx={{ my: 1.5 }} />
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Sub Technicians
-                </Typography>
-                <Button size="small" startIcon={<AddIcon />} onClick={() => setAssignOpen(true)}>
-                  Add
+            </SectionCard>
+
+            <SectionCard
+              title="Sub Technicians"
+              action={
+                <Button size="small" startIcon={<AddIcon />} onClick={openSubTechDialog}>
+                  {wo.subTechnicianIds.length === 0 ? 'Add' : 'Edit'}
                 </Button>
-              </Stack>
+              }
+            >
               {wo.subTechnicianIds.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                   None
@@ -711,9 +760,9 @@ export default function WorkOrderDetailScreen() {
         </Grid>
       </Grid>
 
-      {/* ---- 5.3.5 Assign dialog ---- */}
-      <Dialog open={assignOpen} onClose={() => setAssignOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Send to Technician</DialogTitle>
+      {/* ---- 5.3.5 Main Technician dialog ---- */}
+      <Dialog open={mainTechOpen} onClose={() => setMainTechOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{wo.mainTechnicianId ? 'Edit Main Technician' : 'Assign Main Technician'}</DialogTitle>
         <DialogContent>
           {activeTechs.length === 0 ? (
             <Alert severity="warning">No active Technicians available in your group.</Alert>
@@ -736,9 +785,38 @@ export default function WorkOrderDetailScreen() {
                 )}
                 renderInput={(p) => <TextField {...p} required label="Main Technician" placeholder="Enter name or email" />}
               />
+              <DatePicker
+                label="Due Date"
+                format="DD/MM/YYYY"
+                value={dueDate ? dayjs(dueDate) : null}
+                onChange={(v) => setDueDate(v ? v.format('YYYY-MM-DD') : '')}
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+              <TextField label="Notes" value={assignNotes} onChange={(e) => setAssignNotes(e.target.value)} fullWidth multiline minRows={2} />
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button color="inherit" onClick={() => setMainTechOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="contained" startIcon={<SendIcon />} onClick={handleSaveMainTech} disabled={activeTechs.length === 0}>
+            {wo.status === 'Pending - Unassigned' ? 'Send to Technician' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ---- 5.3.5 Sub Technicians dialog ---- */}
+      <Dialog open={subTechOpen} onClose={() => setSubTechOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Sub Technicians</DialogTitle>
+        <DialogContent>
+          {activeTechs.length === 0 ? (
+            <Alert severity="warning">No active Technicians available in your group.</Alert>
+          ) : (
+            <Stack spacing={2} sx={{ mt: 1 }}>
               <Autocomplete
                 multiple
-                options={activeTechs.filter((t) => t.id !== mainTech)}
+                options={activeTechs.filter((t) => t.id !== wo.mainTechnicianId)}
                 getOptionLabel={(t) => `${t.name} · ${t.email}`}
                 value={activeTechs.filter((t) => subTechs.includes(t.id))}
                 onChange={(_, v) => setSubTechs(v.map((t) => t.id))}
@@ -754,23 +832,15 @@ export default function WorkOrderDetailScreen() {
                 )}
                 renderInput={(p) => <TextField {...p} label="Sub Technicians" placeholder="Enter name or email" />}
               />
-              <DatePicker
-                label="Due Date"
-                format="DD/MM/YYYY"
-                value={dueDate ? dayjs(dueDate) : null}
-                onChange={(v) => setDueDate(v ? v.format('YYYY-MM-DD') : '')}
-                slotProps={{ textField: { fullWidth: true } }}
-              />
-              <TextField label="Notes" value={assignNotes} onChange={(e) => setAssignNotes(e.target.value)} fullWidth multiline minRows={2} />
             </Stack>
           )}
         </DialogContent>
         <DialogActions>
-          <Button color="inherit" onClick={() => setAssignOpen(false)}>
+          <Button color="inherit" onClick={() => setSubTechOpen(false)}>
             Cancel
           </Button>
-          <Button variant="contained" startIcon={<SendIcon />} onClick={handleAssign} disabled={activeTechs.length === 0}>
-            Send to Technician
+          <Button variant="contained" onClick={handleSaveSubTechs} disabled={activeTechs.length === 0}>
+            Save
           </Button>
         </DialogActions>
       </Dialog>

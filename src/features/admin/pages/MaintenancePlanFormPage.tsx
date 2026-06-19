@@ -11,6 +11,9 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
+import Paper from '@mui/material/Paper';
 import PageHeader from '../../../components/PageHeader';
 import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/AdminToast';
@@ -33,6 +36,8 @@ export default function MaintenancePlanFormPage() {
   const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
   const subs = useMemo(() => assetSubsystems.filter((s) => s.systemId === f.systemId), [f.systemId]);
   const types = useMemo(() => assetTypes.filter((t) => t.subsystemId === f.subsystemId), [f.subsystemId]);
+  // Checklist is inherited from the selected Asset Type and becomes part of the plan definition.
+  const selectedType = useMemo(() => assetTypes.find((t) => t.id === f.typeId), [f.typeId]);
 
   const save = () => {
     const e: Record<string, string> = {};
@@ -67,6 +72,29 @@ export default function MaintenancePlanFormPage() {
             <Grid size={{ xs: 12 }}><Button variant="outlined" component="label">Upload Photos<input type="file" hidden multiple accept="image/*" onChange={() => toast('Photos selected (demo).')} /></Button></Grid>
           </Grid>
         </SectionCard>
+
+        <SectionCard title="Checklist">
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            Inherited from the selected Asset Type. Generated Work Orders will use this checklist.
+          </Typography>
+          {!f.typeId ? (
+            <Typography variant="body2" color="text.secondary">Select an Asset Type to load its checklist.</Typography>
+          ) : (selectedType?.checklist.length ?? 0) === 0 ? (
+            <Typography variant="body2" color="text.secondary">The selected Asset Type has no checklist items.</Typography>
+          ) : (
+            <Stack spacing={1}>
+              {selectedType!.checklist.map((c, i) => (
+                <Paper key={c.id} variant="outlined" sx={{ borderRadius: '16px', p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Typography fontWeight={700} color="text.secondary">{i + 1}.</Typography>
+                  <Typography sx={{ flex: 1, minWidth: 160 }}>{c.name}</Typography>
+                  <Chip size="small" label={`Description: ${c.description}`} variant="outlined" />
+                  <Chip size="small" label={`Photos: ${c.photos}`} variant="outlined" />
+                </Paper>
+              ))}
+            </Stack>
+          )}
+        </SectionCard>
+
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button color="inherit" onClick={() => navigate('/admin/maintenance-plans')}>Cancel</Button>
           <Button variant="contained" onClick={save}>{editing ? 'Save' : 'Create'}</Button>

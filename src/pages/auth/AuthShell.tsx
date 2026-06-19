@@ -1,5 +1,5 @@
 /**
- * AuthShell — a two-pane responsive wrapper shared by Login / SignUp /
+ * AuthShell — a two-pane responsive wrapper shared by Login /
  * ForgotPassword. Left: brand panel (hidden on small screens). Right: the form.
  */
 import { Link as RouterLink } from 'react-router-dom';

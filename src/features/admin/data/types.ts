@@ -4,6 +4,8 @@
  */
 
 export type ActiveStatus = 'Active' | 'Inactive';
+/** Campus lifecycle — archive is a soft-delete that hides it from new assignments. */
+export type CampusStatus = 'Active' | 'Archived';
 export type UserStatus = 'Active' | 'Inactive' | 'Suspended' | 'Pending';
 export type RoleName = 'Super Admin' | 'Building Manager' | 'MSP Supervisor' | 'MSP Technician';
 export type Frequency = 'Monthly' | 'Quarterly' | 'Yearly';
@@ -22,6 +24,9 @@ export interface AreaUnit {
   id: string;
   name: string;
   type: 'Area' | 'Unit';
+  /** Drawings can be uploaded at Area/Unit level (unit / common-area layouts). */
+  hasDrawing?: boolean;
+  drawingName?: string;
 }
 
 export interface Floor {
@@ -33,14 +38,45 @@ export interface Floor {
   drawingName?: string;
 }
 
+/**
+ * A team belonging to a Building, used to standardize user assignment.
+ * Organizational only — a team groups people; it is not an operational scope.
+ */
+export interface BuildingTeam {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+/**
+ * Optional grouping of Buildings for organization / navigation / reporting only.
+ * Campus is NOT an operational scope: it never affects permissions, user groups,
+ * assets, inventory, requests, work orders, maintenance plans or any other module.
+ */
+export interface Campus {
+  id: string;
+  name: string;
+  /** Short code, e.g. "HCMC". */
+  code?: string;
+  description?: string;
+  status: CampusStatus;
+  createdAt: string;
+}
+
 export interface Building {
   id: string;
   name: string;
   address: string;
   status: ActiveStatus;
+  /** Optional Campus grouping. Undefined / '' means the building is standalone. */
+  campusId?: string;
   floors: Floor[];
+  /** Teams defined under this building (for standardized user assignment). */
+  teams?: BuildingTeam[];
   /** Derived/legacy: true if any floor has a drawing. */
   hasDrawing: boolean;
+  /** Building-level (site plan / building-wide) as-built drawing. */
+  buildingDrawingName?: string;
   /** Building-level tenant sign-off configuration toggle. */
   tenantSignOffEnabled?: boolean;
   /** Building Managers assigned to this building. */
@@ -101,11 +137,20 @@ export interface AppUser {
   level?: string;
   createdAt: string;
   buildingIds: string[];
+  /** Legacy single-group reference; kept for back-compat. Prefer groupIds. */
   groupId?: string;
+  /** User Groups this user belongs to (access scope). Assigned on the user form. */
+  groupIds?: string[];
+  /** Company / employer name. */
+  company?: string;
   /** Work shift, e.g. 'Day (08:00-17:00)'. */
   workShift?: string;
-  /** Team name. */
+  /** Team name (resolved from the selected building team, kept for display). */
   team?: string;
+  /** Building the assigned team belongs to. */
+  teamBuildingId?: string;
+  /** Selected building team id (see Building.teams). */
+  teamId?: string;
   /** Avatar image URL (or empty → initials fallback). */
   avatarUrl?: string;
 }
@@ -114,6 +159,7 @@ export interface AssetSystem {
   id: string;
   name: string;
   code: string;
+  description?: string;
   status: ActiveStatus;
   createdAt: string;
 }
@@ -122,6 +168,7 @@ export interface AssetSubsystem {
   id: string;
   name: string;
   code: string;
+  description?: string;
   status: ActiveStatus;
   systemId: string;
   createdAt: string;
@@ -138,11 +185,19 @@ export interface AssetType {
   id: string;
   name: string;
   code: string;
+  description?: string;
   systemId: string;
   subsystemId: string;
   status: ActiveStatus;
   createdAt: string;
   checklist: ChecklistItem[];
+}
+
+/** A supporting document/file attached to an Asset (catalogue, spec, manual, warranty). */
+export interface AssetDocument {
+  id: string;
+  name: string;
+  kind: 'PDF' | 'Excel' | 'Image' | 'Other';
 }
 
 export interface Asset {
@@ -158,8 +213,18 @@ export interface Asset {
   model?: string;
   serial?: string;
   brand?: string;
+  /** Manufacturer (equipment maker). */
+  manufacturer?: string;
   purchaseDate?: string;
   manufacturedDate?: string;
+  /** Date the asset was installed/commissioned. */
+  installationDate?: string;
+  /** QR / asset tag code (defaults to the asset code when blank). */
+  qrCode?: string;
+  /** Free-text description / remarks. */
+  description?: string;
+  /** Supporting documents (catalogue, spec sheet, manual, warranty, …). */
+  documents?: AssetDocument[];
   status: ActiveStatus;
   createdAt: string;
 }

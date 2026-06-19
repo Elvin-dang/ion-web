@@ -17,7 +17,6 @@ import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Grid from '@mui/material/Grid';
 import Tooltip from '@mui/material/Tooltip';
-import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PageHeader from '../../../components/PageHeader';
@@ -43,7 +42,6 @@ export default function UserGroupFormPage() {
   const [name, setName] = useState(existing?.name ?? '');
   const [description, setDescription] = useState(existing?.description ?? '');
   const [status, setStatus] = useState<ActiveStatus>(existing?.status ?? 'Active');
-  const [memberIds, setMemberIds] = useState<string[]>(existing?.memberIds ?? []);
   const [assetScopes, setAssetScopes] = useState<AssetScopeEntry[]>(existing?.assetScopes ?? []);
   const [locationScopes, setLocationScopes] = useState<LocationScopeEntry[]>(existing?.locationScopes ?? []);
   const [err, setErr] = useState('');
@@ -62,8 +60,10 @@ export default function UserGroupFormPage() {
     setLocationScopes((p) => p.map((e) => (e.id === id ? { ...e, ...patch } : e)));
   const removeLocationScope = (id: string) => setLocationScopes((p) => p.filter((e) => e.id !== id));
 
-  // members available = users not yet in any group (or already in this group)
-  const available = users.filter((u) => (!u.groupId || u.groupId === id) && !memberIds.includes(u.id));
+  // Related users are READ-ONLY here: membership is assigned from the user create/edit flow.
+  const relatedUsers = users.filter(
+    (u) => (id ? u.groupIds?.includes(id) || u.groupId === id : false) || (existing?.memberIds ?? []).includes(u.id),
+  );
 
   const save = () => {
     if (!name.trim()) { setErr('Group name is required.'); return; }
@@ -183,37 +183,28 @@ export default function UserGroupFormPage() {
           </Stack>
         </SectionCard>
 
-        <SectionCard title="Members">
-          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>Each user can only belong to 1 group.</Typography>
-          <TextField
-            select label="Add member" value="" onChange={(e) => { if (e.target.value) setMemberIds((p) => [...p, e.target.value]); }}
-            fullWidth sx={{ mt: 1.5, maxWidth: 320 }} disabled={available.length === 0}
-            helperText={available.length === 0 ? 'No more available users' : ' '}
-          >
-            {available.map((u) => <MenuItem key={u.id} value={u.id}>{u.fullName} · {u.role}</MenuItem>)}
-          </TextField>
+        <SectionCard title="Related Users">
+          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+            Users assigned to this group. Membership is managed from the user create/edit flow — add or remove a user there, not here.
+          </Typography>
           <Grid container spacing={1.5} sx={{ mt: 0.5 }}>
-            {memberIds.length === 0 ? (
-              <Grid size={{ xs: 12 }}><Typography variant="body2" color="text.secondary">No members yet.</Typography></Grid>
-            ) : memberIds.map((m) => {
-              const u = users.find((x) => x.id === m);
-              return (
-                <Grid key={m} size={{ xs: 12, sm: 6 }}>
-                  <Paper variant="outlined" sx={{ p: 1.5, borderRadius: '16px', display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                    <Avatar src={u?.avatarUrl || undefined} sx={{ width: 44, height: 44, fontSize: 16 }}>{initials(u?.fullName ?? userName(m))}</Avatar>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap' }}>
-                        <Typography variant="subtitle2" noWrap>{u?.fullName ?? userName(m)}</Typography>
-                        {u?.role && <Chip size="small" label={u.role} color="primary" variant="outlined" />}
-                      </Stack>
-                      <Typography variant="caption" color="text.secondary" display="block" noWrap>{u?.email ?? '—'}</Typography>
-                      <Typography variant="caption" color="text.secondary" display="block" noWrap>{u?.phone || '—'}</Typography>
-                    </Box>
-                    <IconButton size="small" onClick={() => setMemberIds((p) => p.filter((x) => x !== m))}><CloseIcon fontSize="small" /></IconButton>
-                  </Paper>
-                </Grid>
-              );
-            })}
+            {relatedUsers.length === 0 ? (
+              <Grid size={{ xs: 12 }}><Typography variant="body2" color="text.secondary">No users assigned to this group yet.</Typography></Grid>
+            ) : relatedUsers.map((u) => (
+              <Grid key={u.id} size={{ xs: 12, sm: 6 }}>
+                <Paper variant="outlined" sx={{ p: 1.5, borderRadius: '16px', display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                  <Avatar src={u.avatarUrl || undefined} sx={{ width: 44, height: 44, fontSize: 16 }}>{initials(u.fullName ?? userName(u.id))}</Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap' }}>
+                      <Typography variant="subtitle2" noWrap>{u.fullName ?? userName(u.id)}</Typography>
+                      {u.role && <Chip size="small" label={u.role} color="primary" variant="outlined" />}
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary" display="block" noWrap>{u.email ?? '—'}</Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" noWrap>{u.phone || '—'}</Typography>
+                  </Box>
+                </Paper>
+              </Grid>
+            ))}
           </Grid>
         </SectionCard>
 

@@ -38,6 +38,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ApartmentIcon from '@mui/icons-material/Apartment';
+import DomainIcon from '@mui/icons-material/Domain';
+import GroupsIcon from '@mui/icons-material/Groups';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { alpha } from '@mui/material/styles';
@@ -48,6 +50,8 @@ import AdminStatusChip from '../components/AdminStatusChip';
 import { useToast } from '../components/AdminToast';
 import {
   buildings as seedBuildings,
+  campuses as seedCampuses,
+  campusName,
   users,
   userGroups,
   assets,
@@ -55,10 +59,50 @@ import {
   subsystemName,
   typeName,
 } from '../data/mockData';
-import type { ActiveStatus, AreaUnit, Building, Floor } from '../data/types';
+import type { ActiveStatus, AreaUnit, Building, BuildingTeam, Floor } from '../data/types';
+
+/** Standalone (no-campus) group key for the grouped building list. */
+const STANDALONE = '__standalone';
 
 let uid = 1000;
 const nid = (p: string) => `${p}-${uid++}`;
+
+/** One uploadable drawing slot (building / floor / area-unit), reused across levels. */
+function DrawingRow({ label, drawingName, onUpload, onDelete, dense }: {
+  label: string;
+  drawingName?: string;
+  onUpload: () => void;
+  onDelete: () => void;
+  dense?: boolean;
+}) {
+  const has = !!drawingName;
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        borderRadius: '16px', p: dense ? 1.25 : 2, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap',
+        borderStyle: has ? 'solid' : 'dashed',
+        backgroundColor: (t) => (has ? alpha(t.palette.primary.main, 0.04) : 'transparent'),
+      }}
+    >
+      {has ? <PictureAsPdfIcon color="primary" fontSize={dense ? 'small' : 'medium'} /> : <UploadFileIcon color="action" fontSize={dense ? 'small' : 'medium'} />}
+      <Box sx={{ flex: 1, minWidth: 140 }}>
+        <Typography fontWeight={600} variant={dense ? 'body2' : 'body1'}>{label}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          {has ? drawingName : 'No drawing uploaded · PDF only · Max 50 MB'}
+        </Typography>
+      </Box>
+      {has ? (
+        <Stack direction="row" spacing={1}>
+          <Button size="small" variant="outlined" startIcon={<UploadFileIcon />} onClick={onUpload}>Replace</Button>
+          <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={onDelete}>Delete</Button>
+        </Stack>
+      ) : (
+        <Button size="small" variant="contained" startIcon={<UploadFileIcon />} onClick={onUpload}>Upload Drawing</Button>
+      )}
+    </Paper>
+  );
+}
 
 export default function BuildingsPage() {
   const { toast, node } = useToast();
@@ -69,13 +113,15 @@ export default function BuildingsPage() {
 
   // dialogs
   const [bldDialog, setBldDialog] = useState<{ mode: 'create' | 'edit' } | null>(null);
-  const [bldForm, setBldForm] = useState<{ name: string; address: string; status: ActiveStatus }>({ name: '', address: '', status: 'Active' });
+  const [bldForm, setBldForm] = useState<{ name: string; address: string; status: ActiveStatus; campusId: string }>({ name: '', address: '', status: 'Active', campusId: '' });
   const [bldErr, setBldErr] = useState('');
   const [delOpen, setDelOpen] = useState(false);
   const [floorDialog, setFloorDialog] = useState<{ mode: 'create' | 'edit'; floorId?: string } | null>(null);
   const [floorName, setFloorName] = useState('');
   const [areaDialog, setAreaDialog] = useState<{ floorId: string; areaId?: string } | null>(null);
   const [areaForm, setAreaForm] = useState<{ name: string; type: 'Area' | 'Unit' }>({ name: '', type: 'Area' });
+  const [teamDialog, setTeamDialog] = useState<{ mode: 'create' | 'edit'; teamId?: string } | null>(null);
+  const [teamForm, setTeamForm] = useState<{ name: string; description: string }>({ name: '', description: '' });
 
   const filtered = useMemo(() => {
     const sorted = [...list].sort((a, b) => a.name.localeCompare(b.name));
@@ -83,14 +129,53 @@ export default function BuildingsPage() {
     return sorted.filter((b) => b.name.toLowerCase().includes(search.toLowerCase()));
   }, [list, search]);
 
+  /**
+   * Group the (filtered) buildings by Campus for the list, with standalone
+   * buildings last. Campus order follows the campus mock; any campusId not in
+   * the mock is shown as its own group (defensive, never silently dropped).
+   */
+  const groups = useMemo(() => {
+    const byCampus = new Map<string, Building[]>();
+    const standalone: Building[] = [];
+    for (const b of filtered) {
+      if (b.campusId) {
+        const arr = byCampus.get(b.campusId) ?? [];
+        arr.push(b);
+        byCampus.set(b.campusId, arr);
+      } else {
+        standalone.push(b);
+      }
+    }
+    const out: { id: string; label: string; archived: boolean; buildings: Building[] }[] = [];
+    for (const c of seedCampuses) {
+      const arr = byCampus.get(c.id);
+      if (arr?.length) {
+        out.push({ id: c.id, label: c.name, archived: c.status === 'Archived', buildings: arr });
+        byCampus.delete(c.id);
+      }
+    }
+    // orphan campusIds (referenced but not in the campus mock)
+    for (const [cid, arr] of byCampus) {
+      out.push({ id: cid, label: campusName(cid) || 'Unknown campus', archived: false, buildings: arr });
+    }
+    if (standalone.length) out.push({ id: STANDALONE, label: 'Standalone Buildings', archived: false, buildings: standalone });
+    return out;
+  }, [filtered]);
+
+  /** Active campuses available for assignment in the building form. */
+  const assignableCampuses = useMemo(
+    () => seedCampuses.filter((c) => c.status === 'Active').sort((a, b) => a.name.localeCompare(b.name)),
+    [],
+  );
+
   const selected = list.find((b) => b.id === selectedId) ?? null;
   const totalAreas = (b: Building) => b.floors.reduce((acc, f) => acc + f.areas.length, 0);
 
   /* ---- building CRUD ---- */
-  const openCreate = () => { setBldForm({ name: '', address: '', status: 'Active' }); setBldErr(''); setBldDialog({ mode: 'create' }); };
+  const openCreate = () => { setBldForm({ name: '', address: '', status: 'Active', campusId: '' }); setBldErr(''); setBldDialog({ mode: 'create' }); };
   const openEdit = () => {
     if (!selected) return;
-    setBldForm({ name: selected.name, address: selected.address, status: selected.status });
+    setBldForm({ name: selected.name, address: selected.address, status: selected.status, campusId: selected.campusId ?? '' });
     setBldErr('');
     setBldDialog({ mode: 'edit' });
   };
@@ -100,14 +185,15 @@ export default function BuildingsPage() {
     if (name.length > 100) { setBldErr('Building name must not exceed 100 characters.'); return; }
     const dup = list.some((b) => b.name.toLowerCase() === name.toLowerCase() && b.id !== selectedId);
     if (dup) { setBldErr('A building with this name already exists.'); return; }
+    const campusId = bldForm.campusId || undefined;
     if (bldDialog?.mode === 'create') {
-      const nb: Building = { id: nid('BLD'), name, address: bldForm.address.trim(), status: bldForm.status, floors: [], hasDrawing: false };
+      const nb: Building = { id: nid('BLD'), name, address: bldForm.address.trim(), status: bldForm.status, campusId, floors: [], hasDrawing: false };
       setList((p) => [...p, nb]);
       setSelectedId(nb.id);
       setTab(0);
       toast('Building created successfully.');
     } else {
-      setList((p) => p.map((b) => (b.id === selectedId ? { ...b, name, address: bldForm.address.trim(), status: bldForm.status } : b)));
+      setList((p) => p.map((b) => (b.id === selectedId ? { ...b, name, address: bldForm.address.trim(), status: bldForm.status, campusId } : b)));
       toast('Building updated successfully.');
     }
     setBldDialog(null);
@@ -169,6 +255,33 @@ export default function BuildingsPage() {
     setAreaDialog(null);
   };
 
+  /* ---- building team CRUD ---- */
+  const openAddTeam = () => { setTeamForm({ name: '', description: '' }); setTeamDialog({ mode: 'create' }); };
+  const openEditTeam = (t: BuildingTeam) => { setTeamForm({ name: t.name, description: t.description ?? '' }); setTeamDialog({ mode: 'edit', teamId: t.id }); };
+  const saveTeam = () => {
+    if (!selected) return;
+    const name = teamForm.name.trim();
+    if (!name) { toast('Team name is required.', 'error'); return; }
+    const teams = selected.teams ?? [];
+    const dup = teams.some((t) => t.name.toLowerCase() === name.toLowerCase() && t.id !== teamDialog?.teamId);
+    if (dup) { toast('A team with this name already exists in this building.', 'error'); return; }
+    const description = teamForm.description.trim() || undefined;
+    setList((p) => p.map((b) => {
+      if (b.id !== selectedId) return b;
+      const cur = b.teams ?? [];
+      if (teamDialog?.mode === 'create') {
+        return { ...b, teams: [...cur, { id: nid('TM'), name, description }] };
+      }
+      return { ...b, teams: cur.map((t) => (t.id === teamDialog?.teamId ? { ...t, name, description } : t)) };
+    }));
+    toast(teamDialog?.mode === 'create' ? 'Team added.' : 'Team updated successfully.');
+    setTeamDialog(null);
+  };
+  const deleteTeam = (teamId: string) => {
+    setList((p) => p.map((b) => (b.id === selectedId ? { ...b, teams: (b.teams ?? []).filter((t) => t.id !== teamId) } : b)));
+    toast('Team removed.');
+  };
+
   /* ---- per-floor as-built drawing (mock upload) ---- */
   const setFloorDrawing = (floorId: string, has: boolean) => {
     setList((p) => p.map((b) => {
@@ -179,6 +292,33 @@ export default function BuildingsPage() {
           : f,
       );
       return { ...b, floors, hasDrawing: floors.some((f) => f.hasDrawing) };
+    }));
+    toast(has ? 'Drawing uploaded successfully.' : 'Drawing deleted successfully.');
+  };
+
+  /* ---- building-level as-built drawing (site plan) ---- */
+  const setBuildingDrawing = (has: boolean) => {
+    setList((p) => p.map((b) => (b.id === selectedId
+      ? { ...b, buildingDrawingName: has ? `${b.id}-site-plan.pdf` : undefined }
+      : b)));
+    toast(has ? 'Drawing uploaded successfully.' : 'Drawing deleted successfully.');
+  };
+
+  /* ---- per-area/unit as-built drawing (mock upload) ---- */
+  const setAreaDrawing = (floorId: string, areaId: string, has: boolean) => {
+    setList((p) => p.map((b) => {
+      if (b.id !== selectedId) return b;
+      return {
+        ...b,
+        floors: b.floors.map((f) => (f.id !== floorId ? f : {
+          ...f,
+          areas: f.areas.map((a) => (a.id !== areaId ? a : {
+            ...a,
+            hasDrawing: has,
+            drawingName: has ? `${b.id}-${a.name.replace(/\s+/g, '')}-asbuilt.pdf` : undefined,
+          })),
+        })),
+      };
     }));
     toast(has ? 'Drawing uploaded successfully.' : 'Drawing deleted successfully.');
   };
@@ -229,27 +369,42 @@ export default function BuildingsPage() {
               </Typography>
             ) : (
               <List disablePadding>
-                {filtered.map((b) => (
-                  <ListItemButton
-                    key={b.id}
-                    selected={b.id === selectedId}
-                    onClick={() => { setSelectedId(b.id); setTab(0); }}
-                    sx={{
-                      borderRadius: 2, mb: 0.5, alignItems: 'flex-start',
-                      borderLeft: b.id === selectedId ? '3px solid' : '3px solid transparent',
-                      borderLeftColor: b.id === selectedId ? 'primary.main' : 'transparent',
-                    }}
-                  >
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography fontWeight={700} noWrap>{b.name}</Typography>
-                        <AdminStatusChip status={b.status} />
-                      </Box>
-                      <Typography variant="caption" color="text.secondary" noWrap display="block">
-                        {b.floors.length} floors · {b.address || 'No address'}
+                {groups.map((g) => (
+                  <Box key={g.id} sx={{ mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5 }}>
+                      {g.id === STANDALONE
+                        ? <ApartmentIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+                        : <DomainIcon fontSize="small" color="primary" />}
+                      <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, lineHeight: 1.4 }} noWrap>
+                        {g.label}
                       </Typography>
+                      {g.archived && <Chip size="small" label="Archived" sx={{ height: 18, fontSize: 10 }} />}
+                      <Box sx={{ flex: 1 }} />
+                      <Typography variant="caption" color="text.disabled">{g.buildings.length}</Typography>
                     </Box>
-                  </ListItemButton>
+                    {g.buildings.map((b) => (
+                      <ListItemButton
+                        key={b.id}
+                        selected={b.id === selectedId}
+                        onClick={() => { setSelectedId(b.id); setTab(0); }}
+                        sx={{
+                          borderRadius: 2, mb: 0.5, ml: 1, alignItems: 'flex-start',
+                          borderLeft: '3px solid',
+                          borderLeftColor: b.id === selectedId ? 'primary.main' : 'transparent',
+                        }}
+                      >
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography fontWeight={700} noWrap>{b.name}</Typography>
+                            <AdminStatusChip status={b.status} />
+                          </Box>
+                          <Typography variant="caption" color="text.secondary" noWrap display="block">
+                            {b.floors.length} floors · {b.address || 'No address'}
+                          </Typography>
+                        </Box>
+                      </ListItemButton>
+                    ))}
+                  </Box>
                 ))}
               </List>
             )}
@@ -276,10 +431,11 @@ export default function BuildingsPage() {
                   </Stack>
                 </Box>
 
-                <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
+                <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }} variant="scrollable" scrollButtons="auto">
                   <Tab label="Floors & Areas" />
                   <Tab label="As-Built Drawing" />
                   <Tab label="Info" />
+                  <Tab label="Teams" />
                 </Tabs>
 
                 {tab === 0 && (
@@ -324,38 +480,48 @@ export default function BuildingsPage() {
                 {tab === 1 && (
                   <Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      As-built drawings are managed per floor. Each floor can have its own drawing.
+                      As-built drawings can be managed at three levels — Building (site plan), Floor, and Area/Unit. Assets can later be tagged on the most appropriate drawing.
                     </Typography>
+
+                    {/* Building-level drawing */}
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Building Drawing</Typography>
+                    <DrawingRow
+                      label={`${selected.name} · Site plan`}
+                      drawingName={selected.buildingDrawingName}
+                      onUpload={() => setBuildingDrawing(true)}
+                      onDelete={() => setBuildingDrawing(false)}
+                    />
+
+                    {/* Floor + Area/Unit drawings */}
+                    <Divider sx={{ my: 2.5 }} />
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Floor & Area/Unit Drawings</Typography>
                     {selected.floors.length === 0 ? (
                       <Typography variant="body2" color="text.secondary">No floors yet. Add floors first.</Typography>
                     ) : (
                       <Stack spacing={1.5}>
                         {selected.floors.map((f) => (
-                          <Paper
-                            key={f.id}
-                            variant="outlined"
-                            sx={{
-                              borderRadius: '16px', p: 2, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap',
-                              borderStyle: f.hasDrawing ? 'solid' : 'dashed',
-                              backgroundColor: (t) => (f.hasDrawing ? alpha(t.palette.primary.main, 0.04) : 'transparent'),
-                            }}
-                          >
-                            {f.hasDrawing ? <PictureAsPdfIcon color="primary" /> : <UploadFileIcon color="action" />}
-                            <Box sx={{ flex: 1, minWidth: 160 }}>
-                              <Typography fontWeight={600}>{f.name}</Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {f.hasDrawing ? f.drawingName ?? 'Drawing uploaded' : 'No drawing uploaded · PDF only · Max 50 MB'}
-                              </Typography>
-                            </Box>
-                            {f.hasDrawing ? (
-                              <Stack direction="row" spacing={1}>
-                                <Button size="small" variant="outlined" startIcon={<UploadFileIcon />} onClick={() => setFloorDrawing(f.id, true)}>Replace</Button>
-                                <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => setFloorDrawing(f.id, false)}>Delete</Button>
+                          <Box key={f.id}>
+                            <DrawingRow
+                              label={f.name}
+                              drawingName={f.hasDrawing ? f.drawingName ?? 'Drawing uploaded' : undefined}
+                              onUpload={() => setFloorDrawing(f.id, true)}
+                              onDelete={() => setFloorDrawing(f.id, false)}
+                            />
+                            {f.areas.length > 0 && (
+                              <Stack spacing={1} sx={{ mt: 1, pl: 3 }}>
+                                {f.areas.map((a) => (
+                                  <DrawingRow
+                                    key={a.id}
+                                    label={`${a.name} · ${a.type}`}
+                                    drawingName={a.hasDrawing ? a.drawingName ?? 'Drawing uploaded' : undefined}
+                                    onUpload={() => setAreaDrawing(f.id, a.id, true)}
+                                    onDelete={() => setAreaDrawing(f.id, a.id, false)}
+                                    dense
+                                  />
+                                ))}
                               </Stack>
-                            ) : (
-                              <Button size="small" variant="contained" startIcon={<UploadFileIcon />} onClick={() => setFloorDrawing(f.id, true)}>Upload Drawing</Button>
                             )}
-                          </Paper>
+                          </Box>
                         ))}
                       </Stack>
                     )}
@@ -368,6 +534,7 @@ export default function BuildingsPage() {
                       {[
                         ['Building name', selected.name],
                         ['Status', selected.status],
+                        ['Campus', campusName(selected.campusId) || 'Standalone (no campus)'],
                         ['Address', selected.address || '—'],
                         ['Total floors', String(selected.floors.length)],
                         ['Total areas/units', String(totalAreas(selected))],
@@ -472,6 +639,31 @@ export default function BuildingsPage() {
                     )}
                   </Box>
                 )}
+                {tab === 3 && (
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Teams under this building. Users are assigned to one of these teams during account creation — no free-text team entry.
+                    </Typography>
+                    <Button size="small" startIcon={<AddIcon />} onClick={openAddTeam} sx={{ mb: 1.5 }}>Add team</Button>
+                    {(selected.teams ?? []).length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">No teams yet. Click Add team to start.</Typography>
+                    ) : (
+                      <Stack spacing={1.5}>
+                        {(selected.teams ?? []).map((t) => (
+                          <Paper key={t.id} variant="outlined" sx={{ borderRadius: '16px', p: 2, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                            <GroupsIcon color="primary" />
+                            <Box sx={{ flex: 1, minWidth: 180 }}>
+                              <Typography fontWeight={600}>{t.name}</Typography>
+                              <Typography variant="caption" color="text.secondary">{t.description || 'No description'}</Typography>
+                            </Box>
+                            <IconButton size="small" onClick={() => openEditTeam(t)}><EditIcon fontSize="small" /></IconButton>
+                            <IconButton size="small" color="error" onClick={() => deleteTeam(t.id)}><DeleteIcon fontSize="small" /></IconButton>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    )}
+                  </Box>
+                )}
               </>
             )}
           </Paper>
@@ -485,6 +677,23 @@ export default function BuildingsPage() {
           <Stack spacing={2} sx={{ mt: 0.5 }}>
             <TextField label="Building Name" required value={bldForm.name} onChange={(e) => setBldForm((f) => ({ ...f, name: e.target.value }))} error={!!bldErr} helperText={bldErr} fullWidth />
             <TextField label="Address" value={bldForm.address} onChange={(e) => setBldForm((f) => ({ ...f, address: e.target.value }))} fullWidth />
+            <TextField
+              select
+              label="Campus (optional)"
+              value={bldForm.campusId}
+              onChange={(e) => setBldForm((f) => ({ ...f, campusId: e.target.value }))}
+              helperText="Group this building under a campus, or leave standalone."
+              fullWidth
+            >
+              <MenuItem value="">No Campus (Standalone)</MenuItem>
+              {assignableCampuses.map((c) => (
+                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+              ))}
+              {/* Preserve an archived campus already assigned to this building. */}
+              {bldForm.campusId && !assignableCampuses.some((c) => c.id === bldForm.campusId) && (
+                <MenuItem value={bldForm.campusId}>{campusName(bldForm.campusId) || 'Current campus'} (Archived)</MenuItem>
+              )}
+            </TextField>
             <TextField select label="Status" required value={bldForm.status} onChange={(e) => setBldForm((f) => ({ ...f, status: e.target.value as ActiveStatus }))} fullWidth>
               <MenuItem value="Active">Active</MenuItem>
               <MenuItem value="Inactive">Inactive</MenuItem>
@@ -524,6 +733,21 @@ export default function BuildingsPage() {
         <DialogActions>
           <Button color="inherit" onClick={() => setAreaDialog(null)}>Cancel</Button>
           <Button variant="contained" onClick={saveArea}>Save</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* team dialog */}
+      <Dialog open={!!teamDialog} onClose={() => setTeamDialog(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>{teamDialog?.mode === 'create' ? 'Add Team' : 'Edit Team'}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 0.5 }}>
+            <TextField autoFocus label="Team Name" required value={teamForm.name} onChange={(e) => setTeamForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
+            <TextField label="Description" value={teamForm.description} onChange={(e) => setTeamForm((f) => ({ ...f, description: e.target.value }))} fullWidth multiline minRows={2} />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button color="inherit" onClick={() => setTeamDialog(null)}>Cancel</Button>
+          <Button variant="contained" onClick={saveTeam}>Save</Button>
         </DialogActions>
       </Dialog>
 
