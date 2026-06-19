@@ -1,6 +1,6 @@
 /**
  * DemoAccounts — quick-access cards (one per web role). Clicking a card logs in
- * as that account and navigates to its home route. Shared by Login & SignUp.
+ * as that account and navigates to its home route. Used by Login.
  */
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';

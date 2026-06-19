@@ -14,6 +14,8 @@ import Tab from '@mui/material/Tab';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
+import ListItemText from '@mui/material/ListItemText';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -84,8 +86,18 @@ function UsersTab() {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [list, roleFilter, statusFilter, search]);
 
+  /** Resolve a building team's display name (for storing on the user profile). */
+  const teamName = (bid?: string, tid?: string) =>
+    buildings.find((b) => b.id === bid)?.teams?.find((t) => t.id === tid)?.name;
+  /** Teams available under the currently-selected team building. */
+  const teamOptions = buildings.find((b) => b.id === form.teamBuildingId)?.teams ?? [];
+
   const openCreate = () => { setForm({ role: 'Building Manager', status: 'Pending', buildingIds: [] }); setErr({}); setDialog({ mode: 'create' }); };
-  const openEdit = (u: AppUser) => { setForm({ ...u }); setErr({}); setDialog({ mode: 'edit', user: u }); };
+  const openEdit = (u: AppUser) => {
+    setForm({ ...u, groupIds: u.groupIds ?? (u.groupId ? [u.groupId] : []) });
+    setErr({});
+    setDialog({ mode: 'edit', user: u });
+  };
 
   const save = () => {
     const e: Record<string, string> = {};
@@ -94,21 +106,24 @@ function UsersTab() {
     else if (dialog?.mode === 'create' && list.some((u) => u.email.toLowerCase() === form.email!.toLowerCase())) e.email = 'An account with this email already exists.';
     if (!form.fullName?.trim()) e.fullName = 'Full name is required.';
     if (!form.role) e.role = 'Please select a role.';
-    if (form.role === 'Building Manager' && (!form.buildingIds || form.buildingIds.length === 0)) e.buildingIds = 'Please assign at least one building.';
-    if ((form.role === 'MSP Supervisor' || form.role === 'MSP Technician') && !form.groupId) e.groupId = 'Please assign a User Group.';
+    // Operational scope for ALL non-admin roles (incl. Building Manager) comes from User Groups.
+    if (form.role !== 'Super Admin' && (!form.groupIds || form.groupIds.length === 0)) e.groupIds = 'Please assign at least one User Group.';
     setErr(e);
     if (Object.keys(e).length) return;
 
     if (dialog?.mode === 'create') {
       const nu: AppUser = {
         id: `USR-${uid++}`, fullName: form.fullName!.trim(), email: form.email!.trim(), role: form.role!, status: 'Pending',
-        phone: form.phone, level: form.level, createdAt: new Date().toISOString(), buildingIds: form.buildingIds ?? [], groupId: form.groupId,
-        workShift: form.workShift, team: form.team, avatarUrl: form.avatarUrl,
+        phone: form.phone, level: form.level, createdAt: new Date().toISOString(), buildingIds: form.buildingIds ?? [],
+        groupIds: form.groupIds ?? [], groupId: form.groupIds?.[0],
+        company: form.company, workShift: form.workShift,
+        teamBuildingId: form.teamBuildingId, teamId: form.teamId, team: teamName(form.teamBuildingId, form.teamId),
+        avatarUrl: form.avatarUrl,
       };
       setList((p) => [nu, ...p]);
       toast(`Account created. Invitation sent to ${nu.email}.`);
     } else {
-      setList((p) => p.map((u) => (u.id === dialog?.user?.id ? { ...u, ...form } as AppUser : u)));
+      setList((p) => p.map((u) => (u.id === dialog?.user?.id ? { ...u, ...form, groupId: form.groupIds?.[0], team: teamName(form.teamBuildingId, form.teamId) } as AppUser : u)));
       toast('User account updated successfully.');
     }
     setDialog(null);
@@ -167,23 +182,44 @@ function UsersTab() {
             <TextField select label="Role" required value={form.role ?? ''} disabled={dialog?.mode === 'edit'} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as RoleName }))} error={!!err.role} helperText={err.role} fullWidth>
               {ROLE_OPTIONS.map((r) => <MenuItem key={r} value={r}>{r}</MenuItem>)}
             </TextField>
-            {form.role === 'Building Manager' && (
-              <TextField select label="Buildings" required SelectProps={{ multiple: true }} value={form.buildingIds ?? []} onChange={(e) => setForm((f) => ({ ...f, buildingIds: e.target.value as unknown as string[] }))} error={!!err.buildingIds} helperText={err.buildingIds} fullWidth>
-                {buildings.map((b) => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
+            {form.role !== 'Super Admin' && (
+              <TextField
+                select label="User Groups" required fullWidth
+                SelectProps={{
+                  multiple: true,
+                  renderValue: (selected) => (selected as string[]).map((gid) => seedGroups.find((g) => g.id === gid)?.name ?? gid).join(', '),
+                }}
+                value={form.groupIds ?? []}
+                onChange={(e) => setForm((f) => ({ ...f, groupIds: e.target.value as unknown as string[] }))}
+                error={!!err.groupIds}
+                helperText={err.groupIds || 'Assign one or more groups. Operational scope (buildings & asset systems) is granted through the User Group(s).'}
+              >
+                {seedGroups.map((g) => (
+                  <MenuItem key={g.id} value={g.id}>
+                    <Checkbox checked={(form.groupIds ?? []).includes(g.id)} size="small" sx={{ py: 0 }} />
+                    <ListItemText primary={g.name} />
+                  </MenuItem>
+                ))}
               </TextField>
             )}
-            {(form.role === 'MSP Supervisor' || form.role === 'MSP Technician') && (
-              <TextField select label="User Group" required value={form.groupId ?? ''} onChange={(e) => setForm((f) => ({ ...f, groupId: e.target.value }))} error={!!err.groupId} helperText={err.groupId} fullWidth>
-                {seedGroups.map((g) => <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>)}
-              </TextField>
-            )}
+            <TextField label="Company Name" value={form.company ?? ''} onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))} fullWidth />
             <TextField label="Phone Number" value={form.phone ?? ''} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} fullWidth />
             <TextField label="Level" value={form.level ?? ''} onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))} fullWidth />
             <TextField select label="Work Shift" value={form.workShift ?? ''} onChange={(e) => setForm((f) => ({ ...f, workShift: e.target.value }))} fullWidth>
               <MenuItem value="">—</MenuItem>
               {WORK_SHIFT_OPTIONS.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
             </TextField>
-            <TextField label="Team" value={form.team ?? ''} onChange={(e) => setForm((f) => ({ ...f, team: e.target.value }))} fullWidth />
+            {/* Team assignment: pick a Building, then one of its predefined Teams (no free-text). */}
+            <Stack direction="row" spacing={2}>
+              <TextField select label="Team Building" value={form.teamBuildingId ?? ''} onChange={(e) => setForm((f) => ({ ...f, teamBuildingId: e.target.value, teamId: undefined }))} fullWidth helperText="Select a building to list its teams.">
+                <MenuItem value="">—</MenuItem>
+                {buildings.map((b) => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
+              </TextField>
+              <TextField select label="Team" value={form.teamId ?? ''} onChange={(e) => setForm((f) => ({ ...f, teamId: e.target.value }))} fullWidth disabled={!form.teamBuildingId} helperText={form.teamBuildingId && teamOptions.length === 0 ? 'No teams defined for this building.' : ' '}>
+                <MenuItem value="">—</MenuItem>
+                {teamOptions.map((t) => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
+              </TextField>
+            </Stack>
             <Stack direction="row" spacing={2} alignItems="center">
               <Avatar src={form.avatarUrl || undefined} sx={{ width: 56, height: 56 }}>{initials(form.fullName)}</Avatar>
               <TextField label="Avatar URL" value={form.avatarUrl ?? ''} onChange={(e) => setForm((f) => ({ ...f, avatarUrl: e.target.value }))} fullWidth helperText="Paste an image URL, or leave blank to use initials." />
@@ -305,7 +341,6 @@ function GroupsTab() {
                 </Box>
                 <Stack direction="row" spacing={1}>
                   <Button size="small" variant="contained" onClick={() => navigate(`/admin/user-groups/${g.id}`)}>Edit group</Button>
-                  <Button size="small" variant="outlined" onClick={() => navigate(`/admin/user-groups/${g.id}`)}>Add member</Button>
                   {g.status === 'Active' && <Button size="small" color="error" onClick={() => setDeactivate(g)}>Deactivate</Button>}
                 </Stack>
               </Box>

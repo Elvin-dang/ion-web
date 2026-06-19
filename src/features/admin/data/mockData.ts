@@ -10,6 +10,7 @@ import type {
   AssetSystem,
   AssetType,
   Building,
+  Campus,
   MaintenancePlan,
   OnHoldRecord,
   SparePart,
@@ -26,12 +27,26 @@ import type {
   RoundFault,
 } from './types';
 
+/**
+ * Optional Campus groupings. Purely organizational — see the `Campus` type doc.
+ * Buildings reference a campus via `campusId`; an undefined `campusId` is standalone.
+ */
+export const campuses: Campus[] = [
+  { id: 'CMP-001', name: 'Ho Chi Minh City Portfolio', code: 'HCMC', description: 'Properties located in Ho Chi Minh City.', status: 'Active', createdAt: '2025-01-15' },
+  { id: 'CMP-002', name: 'Hanoi Portfolio', code: 'HN', description: 'Properties located in Hanoi.', status: 'Active', createdAt: '2025-02-02' },
+  { id: 'CMP-003', name: 'Legacy Portfolio', code: 'LEG', description: 'Decommissioned grouping kept for reference.', status: 'Archived', createdAt: '2024-08-20' },
+];
+
+/** Campus display-name lookup (empty string for standalone / unknown). */
+export const campusName = (id?: string) => (id ? campuses.find((c) => c.id === id)?.name ?? '' : '');
+
 export const buildings: Building[] = [
   {
     id: 'BLD-001',
     name: 'Landmark 81',
     address: '720A Dien Bien Phu, Binh Thanh, Ho Chi Minh City',
     status: 'Active',
+    campusId: 'CMP-001',
     hasDrawing: true,
     tenantSignOffEnabled: true,
     managerIds: ['USR-002'],
@@ -45,12 +60,18 @@ export const buildings: Building[] = [
       { id: 'F-003', name: 'Level 5', hasDrawing: false, areas: [{ id: 'A-004', name: 'Plant Room', type: 'Area' }] },
       { id: 'F-004', name: 'Rooftop', hasDrawing: false, areas: [{ id: 'A-005', name: 'Cooling Tower Deck', type: 'Area' }] },
     ],
+    buildingDrawingName: 'L81-site-plan.pdf',
+    teams: [
+      { id: 'TM-010', name: 'HVAC Team', description: 'Chiller plant and air handling.' },
+      { id: 'TM-011', name: 'Electrical Team', description: 'MEP electrical maintenance.' },
+    ],
   },
   {
     id: 'BLD-002',
     name: 'Bitexco Financial Tower',
     address: '2 Hai Trieu, District 1, Ho Chi Minh City',
     status: 'Active',
+    campusId: 'CMP-001',
     hasDrawing: false,
     tenantSignOffEnabled: false,
     managerIds: ['USR-006'],
@@ -58,6 +79,12 @@ export const buildings: Building[] = [
     floors: [
       { id: 'F-005', name: 'B1', hasDrawing: false, areas: [{ id: 'A-006', name: 'MEP Room', type: 'Area' }] },
       { id: 'F-006', name: 'Level 12', hasDrawing: false, areas: [{ id: 'A-007', name: 'Office Suite 12A', type: 'Unit' }] },
+    ],
+    teams: [
+      { id: 'TM-001', name: 'Fire Protection Team', description: 'Fire alarm, sprinkler and suppression systems.' },
+      { id: 'TM-002', name: 'HVAC Team', description: 'Chillers, AHUs, FCUs and ventilation.' },
+      { id: 'TM-003', name: 'Electrical Team', description: 'Power distribution, lighting and generators.' },
+      { id: 'TM-004', name: 'Plumbing Team', description: 'Water supply, drainage and pumps.' },
     ],
   },
   {
@@ -79,6 +106,7 @@ export const buildings: Building[] = [
     name: 'Keangnam Hanoi Landmark',
     address: 'Pham Hung, Nam Tu Liem, Hanoi',
     status: 'Inactive',
+    campusId: 'CMP-002',
     hasDrawing: false,
     tenantSignOffEnabled: false,
     managerIds: [],

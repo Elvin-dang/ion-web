@@ -12,6 +12,8 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
+import Chip from '@mui/material/Chip';
+import Typography from '@mui/material/Typography';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import PageHeader from '../../../components/PageHeader';
@@ -31,9 +33,12 @@ export default function AssetFormPage() {
     systemId: existing?.systemId ?? '', subsystemId: existing?.subsystemId ?? '', typeId: existing?.typeId ?? '',
     buildingId: existing?.buildingId ?? '', floorId: existing?.floorId ?? '', areaId: existing?.areaId ?? '',
     name: existing?.name ?? '', code: existing?.code ?? '', model: existing?.model ?? '', serial: existing?.serial ?? '',
-    brand: existing?.brand ?? '', purchaseDate: existing?.purchaseDate ?? '', manufacturedDate: existing?.manufacturedDate ?? '',
+    brand: existing?.brand ?? '', manufacturer: existing?.manufacturer ?? '', qrCode: existing?.qrCode ?? '',
+    purchaseDate: existing?.purchaseDate ?? '', manufacturedDate: existing?.manufacturedDate ?? '', installationDate: existing?.installationDate ?? '',
+    description: existing?.description ?? '',
     status: (existing?.status ?? 'Active') as ActiveStatus,
   });
+  const [docs, setDocs] = useState<string[]>(existing?.documents?.map((d) => d.name) ?? []);
   const [err, setErr] = useState<Record<string, string>>({});
   const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
 
@@ -106,9 +111,20 @@ export default function AssetFormPage() {
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}><TextField required fullWidth label="Asset Name" value={f.name} onChange={(e) => set('name', e.target.value)} error={!!err.name} helperText={err.name} /></Grid>
             <Grid size={{ xs: 12, sm: 6 }}><TextField required fullWidth label="Asset Code" value={f.code} onChange={(e) => set('code', e.target.value)} error={!!err.code} helperText={err.code} /></Grid>
+            <Grid size={{ xs: 12, sm: 4 }}><TextField fullWidth label="QR Code" value={f.qrCode} onChange={(e) => set('qrCode', e.target.value)} helperText="Defaults to the asset code when left blank." /></Grid>
+            <Grid size={{ xs: 12, sm: 4 }}><TextField fullWidth label="Manufacturer" value={f.manufacturer} onChange={(e) => set('manufacturer', e.target.value)} /></Grid>
             <Grid size={{ xs: 12, sm: 4 }}><TextField fullWidth label="Model" value={f.model} onChange={(e) => set('model', e.target.value)} /></Grid>
             <Grid size={{ xs: 12, sm: 4 }}><TextField fullWidth label="Serial Number" value={f.serial} onChange={(e) => set('serial', e.target.value)} /></Grid>
             <Grid size={{ xs: 12, sm: 4 }}><TextField fullWidth label="Brand" value={f.brand} onChange={(e) => set('brand', e.target.value)} /></Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <DatePicker
+                label="Installation Date"
+                format="DD/MM/YYYY"
+                value={f.installationDate ? dayjs(f.installationDate) : null}
+                onChange={(v) => set('installationDate', v ? v.format('YYYY-MM-DD') : '')}
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+            </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <DatePicker
                 label="Purchase Date"
@@ -132,7 +148,31 @@ export default function AssetFormPage() {
                 <MenuItem value="Active">Active</MenuItem><MenuItem value="Inactive">Inactive</MenuItem>
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12 }}><Button variant="outlined" component="label">Upload Photos<input type="file" hidden multiple accept="image/*" onChange={() => toast('Photos selected (demo).')} /></Button></Grid>
+            <Grid size={{ xs: 12 }}><TextField fullWidth multiline minRows={2} label="Description / Remarks" value={f.description} onChange={(e) => set('description', e.target.value)} /></Grid>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>Supporting Documents</Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                Equipment catalogue, technical specification, installation manual, warranty, … (PDF / Excel / other).
+              </Typography>
+              {docs.length > 0 && (
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                  {docs.map((d, i) => (
+                    <Chip key={`${d}-${i}`} label={d} onDelete={() => setDocs((p) => p.filter((_, j) => j !== i))} />
+                  ))}
+                </Stack>
+              )}
+              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+                <Button variant="outlined" component="label">
+                  Upload Documents
+                  <input type="file" hidden multiple accept=".pdf,.xls,.xlsx,application/pdf" onChange={(e) => {
+                    const names = Array.from(e.target.files ?? []).map((file) => file.name);
+                    if (names.length) setDocs((p) => [...p, ...names]);
+                    toast('Documents attached (demo).');
+                  }} />
+                </Button>
+                <Button variant="outlined" component="label">Upload Photos<input type="file" hidden multiple accept="image/*" onChange={() => toast('Photos selected (demo).')} /></Button>
+              </Stack>
+            </Grid>
           </Grid>
         </SectionCard>
 

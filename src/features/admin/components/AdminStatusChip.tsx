@@ -12,6 +12,7 @@ const S = brandTokens.status;
 const MAP: Record<string, string> = {
   active: S.completed,
   inactive: S.scheduled,
+  archived: S.scheduled,
   pending: S.scheduled,
   'pending - unassigned': S.open,
   suspended: S.overdue,

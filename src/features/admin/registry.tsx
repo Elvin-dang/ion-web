@@ -8,6 +8,7 @@ import type { AppRoute, NavItem } from '../../config/navTypes';
 
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ApartmentIcon from '@mui/icons-material/Apartment';
+import DomainIcon from '@mui/icons-material/Domain';
 import PeopleIcon from '@mui/icons-material/People';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import InsightsIcon from '@mui/icons-material/Insights';
@@ -17,11 +18,14 @@ import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
 import MapIcon from '@mui/icons-material/Map';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import EventRepeatIcon from '@mui/icons-material/EventRepeat';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
 import DashboardPage from './pages/DashboardPage';
 import AssetUtilizationPage from './pages/AssetUtilizationPage';
 import ReportsPage from './pages/ReportsPage';
 import BuildingsPage from './pages/BuildingsPage';
+import CampusesPage from './pages/CampusesPage';
 import UsersPage from './pages/UsersPage';
 import UserGroupFormPage from './pages/UserGroupFormPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
@@ -35,6 +39,8 @@ import DrawingsPage from './pages/DrawingsPage';
 import InventoryPage from './pages/InventoryPage';
 import SparePartDetailPage from './pages/SparePartDetailPage';
 import SparePartFormPage from './pages/SparePartFormPage';
+import AdminRequestsPage from './pages/AdminRequestsPage';
+import AdminWorkOrdersPage from './pages/AdminWorkOrdersPage';
 import MaintenancePlansPage from './pages/MaintenancePlansPage';
 import MaintenancePlanDetailPage from './pages/MaintenancePlanDetailPage';
 import MaintenancePlanFormPage from './pages/MaintenancePlanFormPage';
@@ -48,6 +54,7 @@ export const adminRoutes: AppRoute[] = [
   { path: 'admin/reports', element: <ReportsPage /> },
 
   // 1.2 Building & Location Management
+  { path: 'admin/campuses', element: <CampusesPage /> },
   { path: 'admin/buildings', element: <BuildingsPage /> },
 
   // 1.3 User Management
@@ -72,6 +79,10 @@ export const adminRoutes: AppRoute[] = [
   { path: 'admin/inventory/parts/new', element: <SparePartFormPage /> },
   { path: 'admin/inventory/parts/:id', element: <SparePartDetailPage /> },
 
+  // Request & Work Order Management (portal-wide read-only oversight)
+  { path: 'admin/requests', element: <AdminRequestsPage /> },
+  { path: 'admin/work-orders', element: <AdminWorkOrdersPage /> },
+
   // 1.7 Maintenance Plan Management
   { path: 'admin/maintenance-plans', element: <MaintenancePlansPage /> },
   { path: 'admin/maintenance-plans/new', element: <MaintenancePlanFormPage /> },
@@ -83,6 +94,7 @@ export const adminNav: NavItem[] = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon />, roles },
   { label: 'Asset Utilization', path: '/admin/asset-utilization', icon: <InsightsIcon />, roles },
   { label: 'Reports', path: '/admin/reports', icon: <AssessmentIcon />, roles },
+  { label: 'Campuses', path: '/admin/campuses', icon: <DomainIcon />, roles },
   { label: 'Buildings', path: '/admin/buildings', icon: <ApartmentIcon />, roles },
   { label: 'Users & Roles', path: '/admin/users', icon: <PeopleIcon />, roles },
   // --- Asset Management group (Asset Systems / Asset Types / Assets kept adjacent) ---
@@ -91,6 +103,8 @@ export const adminNav: NavItem[] = [
   { label: 'Assets', path: '/admin/assets', icon: <DevicesOtherIcon />, roles },
   { label: 'Drawings', path: '/admin/drawings', icon: <MapIcon />, roles },
   { label: 'Inventory', path: '/admin/inventory', icon: <Inventory2Icon />, roles },
+  { label: 'Requests', path: '/admin/requests', icon: <AssignmentIcon />, roles },
+  { label: 'Work Orders', path: '/admin/work-orders', icon: <BuildCircleIcon />, roles },
   { label: 'Maintenance Plans', path: '/admin/maintenance-plans', icon: <EventRepeatIcon />, roles },
   // Account Settings intentionally NOT in nav — reachable from profile menu only.
 ];

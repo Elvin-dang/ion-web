@@ -43,7 +43,7 @@ export default function AssetClassificationPage() {
 
   const [sysDialog, setSysDialog] = useState<{ mode: 'create' | 'edit'; row?: AssetSystem } | null>(null);
   const [subDialog, setSubDialog] = useState<{ mode: 'create' | 'edit'; row?: AssetSubsystem } | null>(null);
-  const [form, setForm] = useState<{ name: string; code: string; status: ActiveStatus }>({ name: '', code: '', status: 'Active' });
+  const [form, setForm] = useState<{ name: string; code: string; description: string; status: ActiveStatus }>({ name: '', code: '', description: '', status: 'Active' });
   const [err, setErr] = useState('');
   const [del, setDel] = useState<{ kind: 'sys' | 'sub'; id: string; name: string } | null>(null);
 
@@ -57,7 +57,7 @@ export default function AssetClassificationPage() {
   }, [subs, selSys, subSearch]);
 
   const openSys = (mode: 'create' | 'edit', row?: AssetSystem) => {
-    setForm(row ? { name: row.name, code: row.code, status: row.status } : { name: '', code: '', status: 'Active' });
+    setForm(row ? { name: row.name, code: row.code, description: row.description ?? '', status: row.status } : { name: '', code: '', description: '', status: 'Active' });
     setErr(''); setSysDialog({ mode, row });
   };
   const saveSys = () => {
@@ -67,17 +67,17 @@ export default function AssetClassificationPage() {
     if (systems.some((s) => s.name.toLowerCase() === form.name.toLowerCase() && s.id !== sysDialog?.row?.id)) { setErr('A system with this name already exists.'); return; }
     if (systems.some((s) => s.code.toLowerCase() === form.code.toLowerCase() && s.id !== sysDialog?.row?.id)) { setErr('A system with this code already exists.'); return; }
     if (sysDialog?.mode === 'create') {
-      const ns: AssetSystem = { id: `SYS-${uid++}`, name: form.name.trim(), code: form.code.trim(), status: form.status, createdAt: new Date().toISOString() };
+      const ns: AssetSystem = { id: `SYS-${uid++}`, name: form.name.trim(), code: form.code.trim(), description: form.description.trim() || undefined, status: form.status, createdAt: new Date().toISOString() };
       setSystems((p) => [...p, ns]); setSelSys(ns.id); toast('Asset system created successfully.');
     } else {
-      setSystems((p) => p.map((s) => (s.id === sysDialog?.row?.id ? { ...s, ...form } : s))); toast('Asset system updated successfully.');
+      setSystems((p) => p.map((s) => (s.id === sysDialog?.row?.id ? { ...s, name: form.name.trim(), code: form.code.trim(), description: form.description.trim() || undefined, status: form.status } : s))); toast('Asset system updated successfully.');
     }
     setSysDialog(null);
   };
 
   const openSub = (mode: 'create' | 'edit', row?: AssetSubsystem) => {
     if (mode === 'create' && !selSys) { toast('Please select a parent system first.', 'error'); return; }
-    setForm(row ? { name: row.name, code: row.code, status: row.status } : { name: '', code: '', status: 'Active' });
+    setForm(row ? { name: row.name, code: row.code, description: row.description ?? '', status: row.status } : { name: '', code: '', description: '', status: 'Active' });
     setErr(''); setSubDialog({ mode, row });
   };
   const saveSub = () => {
@@ -86,10 +86,10 @@ export default function AssetClassificationPage() {
     if (subs.some((s) => s.systemId === selSys && s.name.toLowerCase() === form.name.toLowerCase() && s.id !== subDialog?.row?.id)) { setErr('A sub-system with this name already exists in this system.'); return; }
     if (subs.some((s) => s.code.toLowerCase() === form.code.toLowerCase() && s.id !== subDialog?.row?.id)) { setErr('A sub-system with this code already exists.'); return; }
     if (subDialog?.mode === 'create') {
-      const ns: AssetSubsystem = { id: `SUB-${uid++}`, name: form.name.trim(), code: form.code.trim(), status: form.status, systemId: selSys!, createdAt: new Date().toISOString() };
+      const ns: AssetSubsystem = { id: `SUB-${uid++}`, name: form.name.trim(), code: form.code.trim(), description: form.description.trim() || undefined, status: form.status, systemId: selSys!, createdAt: new Date().toISOString() };
       setSubs((p) => [...p, ns]); toast('Asset sub-system created successfully.');
     } else {
-      setSubs((p) => p.map((s) => (s.id === subDialog?.row?.id ? { ...s, ...form } : s))); toast('Asset sub-system updated successfully.');
+      setSubs((p) => p.map((s) => (s.id === subDialog?.row?.id ? { ...s, name: form.name.trim(), code: form.code.trim(), description: form.description.trim() || undefined, status: form.status } : s))); toast('Asset sub-system updated successfully.');
     }
     setSubDialog(null);
   };
@@ -173,6 +173,7 @@ export default function AssetClassificationPage() {
           <Stack spacing={2} sx={{ mt: 0.5 }}>
             <TextField label="System Name" required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} error={!!err} helperText={err} fullWidth />
             <TextField label="Code" required value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} fullWidth />
+            <TextField label="Description" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} fullWidth multiline minRows={2} />
             <TextField select label="Status" value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as ActiveStatus }))} fullWidth>
               <MenuItem value="Active">Active</MenuItem><MenuItem value="Inactive">Inactive</MenuItem>
             </TextField>
@@ -189,9 +190,10 @@ export default function AssetClassificationPage() {
         <DialogTitle>{subDialog?.mode === 'create' ? 'Create Asset Sub-system' : 'Edit Asset Sub-system'}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 0.5 }}>
-            <TextField label="System" value={systemName(selSys ?? '')} disabled fullWidth />
+            <TextField label="Parent Asset System" value={systemName(selSys ?? '')} disabled fullWidth />
             <TextField label="Sub-system Name" required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} error={!!err} helperText={err} fullWidth />
             <TextField label="Code" required value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} fullWidth />
+            <TextField label="Description" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} fullWidth multiline minRows={2} />
             <TextField select label="Status" value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as ActiveStatus }))} fullWidth>
               <MenuItem value="Active">Active</MenuItem><MenuItem value="Inactive">Inactive</MenuItem>
             </TextField>

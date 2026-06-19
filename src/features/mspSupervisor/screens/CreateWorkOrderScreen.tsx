@@ -1,9 +1,12 @@
 /**
- * 5.3.1 Create Ad-hoc Work Order (MSP Supervisor). Full-page form with
- * cascading Asset System → Sub-system → Asset Type → Asset and
- * Building → Floor → Area selectors, all scoped to the User Group.
+ * 5.3.1 Create Ad-hoc Work Order (MSP Supervisor). Full-page form.
+ *
+ * The Asset is the single entry point: selecting it auto-derives the full Asset
+ * System hierarchy (System / Sub-system / Type) and Location hierarchy (Campus /
+ * Building / Floor / Area-Unit) — no manual re-entry. The supervisor then fills
+ * the issue description, proposed solution, estimated time and attachments.
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,58 +24,32 @@ import PageHeader from '../../../components/PageHeader';
 import SectionCard from '../components/SectionCard';
 import ConfirmDialog from '../../../components/ConfirmDialog';
 import { useToast } from '../components/useToast';
-import {
-  AREAS,
-  ASSET_TYPES,
-  assets,
-  FLOORS,
-  PRIORITIES,
-  SUB_SYSTEMS,
-  USER_GROUP_BUILDINGS,
-  USER_GROUP_SYSTEMS,
-} from '../data/mockData';
+import { assets, PRIORITIES } from '../data/mockData';
 
 const schema = z.object({
-  assetSystem: z.string().min(1, 'Asset System is required.'),
-  subSystem: z.string().optional(),
-  assetType: z.string().optional(),
-  asset: z.string().optional(),
-  building: z.string().min(1, 'Building is required.'),
-  floor: z.string().optional(),
-  area: z.string().optional(),
-  description: z.string().min(1, 'Description is required.').max(1000, 'Description must not exceed 1000 characters.'),
-  duration: z.string().optional(),
+  asset: z.string().min(1, 'Asset is required.'),
+  description: z.string().min(1, 'Issue description is required.').max(1000, 'Description must not exceed 1000 characters.'),
+  proposedSolution: z.string().max(1000, 'Proposed solution must not exceed 1000 characters.').optional(),
+  estimatedTime: z.string().optional(),
   priority: z.string().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
+/** A read-only field displaying a value auto-derived from the selected asset. */
+function DerivedField({ label, value }: { label: string; value: string }) {
+  return <TextField label={label} value={value || '—'} fullWidth InputProps={{ readOnly: true }} variant="filled" />;
+}
+
 export default function CreateWorkOrderScreen() {
   const navigate = useNavigate();
   const { toast, toastElement } = useToast();
-  const { control, handleSubmit, watch, setValue } = useForm<FormValues>({
+  const { control, handleSubmit, watch } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      assetSystem: '',
-      subSystem: '',
-      assetType: '',
-      asset: '',
-      building: '',
-      floor: '',
-      area: '',
-      description: '',
-      duration: '',
-      priority: 'Medium',
-    },
+    defaultValues: { asset: '', description: '', proposedSolution: '', estimatedTime: '', priority: 'Medium' },
   });
 
-  const assetSystem = watch('assetSystem');
-  const subSystem = watch('subSystem');
-
-  const subSystemOptions = assetSystem ? SUB_SYSTEMS[assetSystem] ?? [] : [];
-  const assetTypeOptions = subSystem ? ASSET_TYPES[subSystem] ?? [] : [];
-  const assetOptions = assets.filter(
-    (a) => (!assetSystem || a.assetSystem === assetSystem) && (!subSystem || a.subSystem === subSystem),
-  );
+  const assetCode = watch('asset');
+  const selectedAsset = useMemo(() => assets.find((a) => a.code === assetCode), [assetCode]);
 
   const [deleteDraftOpen, setDeleteDraftOpen] = useState(false);
 
@@ -80,12 +57,10 @@ export default function CreateWorkOrderScreen() {
     toast('Work order submitted for Building Manager approval.');
     setTimeout(() => navigate('/msp/work-orders'), 600);
   };
-
   const handleSaveDraft = () => {
     toast('Draft saved. Status: Preparation Draft.');
     setTimeout(() => navigate('/msp/work-orders'), 600);
   };
-
   const handleDeleteDraft = () => {
     setDeleteDraftOpen(false);
     toast('Draft deleted.', 'info');
@@ -106,140 +81,50 @@ export default function CreateWorkOrderScreen() {
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12 }}>
+            <SectionCard title="Asset">
+              <Controller
+                name="asset"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    select
+                    required
+                    fullWidth
+                    label="Asset"
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message ?? 'Selecting an asset auto-fills its classification and location below.'}
+                  >
+                    {assets.map((a) => (
+                      <MenuItem key={a.id} value={a.code}>
+                        {a.code} · {a.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
+            </SectionCard>
+          </Grid>
+
           <Grid size={{ xs: 12, md: 6 }}>
-            <SectionCard title="Asset Classification">
+            <SectionCard title="Asset Classification (auto-derived)">
               <Stack spacing={2}>
-                <Controller
-                  name="assetSystem"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      select
-                      required
-                      fullWidth
-                      label="Asset System"
-                      error={!!fieldState.error}
-                      helperText={fieldState.error?.message}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        setValue('subSystem', '');
-                        setValue('assetType', '');
-                        setValue('asset', '');
-                      }}
-                    >
-                      {USER_GROUP_SYSTEMS.map((s) => (
-                        <MenuItem key={s} value={s}>
-                          {s}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-                <Controller
-                  name="subSystem"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      fullWidth
-                      label="Asset Sub-system"
-                      disabled={!assetSystem}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        setValue('assetType', '');
-                        setValue('asset', '');
-                      }}
-                    >
-                      {subSystemOptions.map((s) => (
-                        <MenuItem key={s} value={s}>
-                          {s}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-                <Controller
-                  name="assetType"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField {...field} select fullWidth label="Asset Type" disabled={!subSystem}>
-                      {assetTypeOptions.map((s) => (
-                        <MenuItem key={s} value={s}>
-                          {s}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-                <Controller
-                  name="asset"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField {...field} select fullWidth label="Asset" disabled={!assetSystem}>
-                      {assetOptions.map((a) => (
-                        <MenuItem key={a.id} value={a.code}>
-                          {a.code} · {a.name}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
+                <DerivedField label="Asset System" value={selectedAsset?.assetSystem ?? ''} />
+                <DerivedField label="Asset Sub-system" value={selectedAsset?.subSystem ?? ''} />
+                <DerivedField label="Asset Type" value={selectedAsset?.assetType ?? ''} />
               </Stack>
             </SectionCard>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <SectionCard title="Location">
+            <SectionCard title="Location (auto-derived)">
               <Stack spacing={2}>
-                <Controller
-                  name="building"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      select
-                      required
-                      fullWidth
-                      label="Building"
-                      error={!!fieldState.error}
-                      helperText={fieldState.error?.message}
-                    >
-                      {USER_GROUP_BUILDINGS.map((b) => (
-                        <MenuItem key={b} value={b}>
-                          {b}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-                <Controller
-                  name="floor"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField {...field} select fullWidth label="Floor">
-                      {FLOORS.map((f) => (
-                        <MenuItem key={f} value={f}>
-                          {f}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-                <Controller
-                  name="area"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField {...field} select fullWidth label="Area / Unit">
-                      {AREAS.map((a) => (
-                        <MenuItem key={a} value={a}>
-                          {a}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
+                {/* Campus applies only where the building belongs to one; otherwise N/A. */}
+                <DerivedField label="Campus" value={selectedAsset ? '—' : ''} />
+                <DerivedField label="Building" value={selectedAsset?.building ?? ''} />
+                <DerivedField label="Floor" value={selectedAsset?.floor ?? ''} />
+                <DerivedField label="Area / Unit" value={selectedAsset?.area ?? ''} />
               </Stack>
             </SectionCard>
           </Grid>
@@ -257,20 +142,36 @@ export default function CreateWorkOrderScreen() {
                       fullWidth
                       multiline
                       minRows={4}
-                      label="Description"
-                      placeholder="Describe the work required (max 1000 characters)"
+                      label="Issue Description"
+                      placeholder="Describe the issue / work required (max 1000 characters)"
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message ?? `${field.value.length}/1000`}
+                    />
+                  )}
+                />
+                <Controller
+                  name="proposedSolution"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      multiline
+                      minRows={3}
+                      label="Proposed Solution"
+                      placeholder="Describe the proposed solution (optional)"
+                      error={!!fieldState.error}
+                      helperText={fieldState.error?.message}
                     />
                   )}
                 />
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Controller
-                      name="duration"
+                      name="estimatedTime"
                       control={control}
                       render={({ field }) => (
-                        <TextField {...field} fullWidth label="Duration of Work" placeholder="e.g. 2 hours" />
+                        <TextField {...field} fullWidth label="Estimated Time Required" placeholder="e.g. 2 hours" />
                       )}
                     />
                   </Grid>
@@ -292,7 +193,7 @@ export default function CreateWorkOrderScreen() {
                 </Grid>
                 <Box>
                   <Button component="label" variant="outlined" startIcon={<UploadFileIcon />}>
-                    Add Attachments
+                    Add Photos / Attachments
                     <input hidden type="file" multiple accept="image/png,image/jpeg,application/pdf" />
                   </Button>
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
