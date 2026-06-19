@@ -104,12 +104,50 @@ function DrawingRow({ label, drawingName, onUpload, onDelete, dense }: {
   );
 }
 
+/** A campus in the simplified Campus tab — name + description only, no hierarchy. */
+type SimpleCampus = { id: string; name: string; description: string };
+
 export default function BuildingsPage() {
   const { toast, node } = useToast();
+  const [mainTab, setMainTab] = useState<'buildings' | 'campus'>('buildings');
   const [list, setList] = useState<Building[]>(() => seedBuildings.map((b) => ({ ...b })));
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState(0);
+
+  // Campus tab — simple flat list (create / edit / delete), name + description only.
+  const [campusList, setCampusList] = useState<SimpleCampus[]>(
+    () => seedCampuses.map((c) => ({ id: c.id, name: c.name, description: c.description ?? '' })),
+  );
+  const [cmpDialog, setCmpDialog] = useState<{ mode: 'create' | 'edit'; id?: string } | null>(null);
+  const [cmpForm, setCmpForm] = useState<{ name: string; description: string }>({ name: '', description: '' });
+  const [cmpErr, setCmpErr] = useState('');
+  const [cmpDelId, setCmpDelId] = useState<string | null>(null);
+
+  const openCreateCampus = () => { setCmpForm({ name: '', description: '' }); setCmpErr(''); setCmpDialog({ mode: 'create' }); };
+  const openEditCampus = (c: SimpleCampus) => { setCmpForm({ name: c.name, description: c.description }); setCmpErr(''); setCmpDialog({ mode: 'edit', id: c.id }); };
+  const saveCampus = () => {
+    const name = cmpForm.name.trim();
+    if (!name) { setCmpErr('Campus name is required.'); return; }
+    if (name.length > 100) { setCmpErr('Campus name must not exceed 100 characters.'); return; }
+    const dup = campusList.some((c) => c.name.toLowerCase() === name.toLowerCase() && c.id !== cmpDialog?.id);
+    if (dup) { setCmpErr('A campus with this name already exists.'); return; }
+    const description = cmpForm.description.trim();
+    if (cmpDialog?.mode === 'create') {
+      setCampusList((p) => [...p, { id: nid('CMP'), name, description }]);
+      toast('Campus created successfully.');
+    } else {
+      setCampusList((p) => p.map((c) => (c.id === cmpDialog?.id ? { ...c, name, description } : c)));
+      toast('Campus updated successfully.');
+    }
+    setCmpDialog(null);
+  };
+  const deleteCampus = () => {
+    setCampusList((p) => p.filter((c) => c.id !== cmpDelId));
+    setCmpDelId(null);
+    toast('Campus deleted successfully.');
+  };
+  const campusToDelete = campusList.find((c) => c.id === cmpDelId) ?? null;
 
   // dialogs
   const [bldDialog, setBldDialog] = useState<{ mode: 'create' | 'edit' } | null>(null);
@@ -348,11 +386,21 @@ export default function BuildingsPage() {
   return (
     <Box>
       <PageHeader
-        title="Buildings"
-        subtitle="Manage buildings, floors and areas/units."
-        action={<Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>New Building</Button>}
+        title="Building Management"
+        subtitle="Manage buildings, floors and areas/units, and group them under campuses."
+        action={
+          mainTab === 'buildings'
+            ? <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>New Building</Button>
+            : <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateCampus}>New Campus</Button>
+        }
       />
 
+      <Tabs value={mainTab} onChange={(_, v) => setMainTab(v)} sx={{ mb: 2.5 }}>
+        <Tab label="Buildings" value="buildings" />
+        <Tab label="Campus" value="campus" />
+      </Tabs>
+
+      {mainTab === 'buildings' && (
       <Grid container spacing={2.5}>
         {/* left list */}
         <Grid size={{ xs: 12, md: 4 }}>
@@ -669,6 +717,58 @@ export default function BuildingsPage() {
           </Paper>
         </Grid>
       </Grid>
+      )}
+
+      {mainTab === 'campus' && (
+        <Paper elevation={2} sx={{ borderRadius: '16px', p: 2.5, minHeight: 420 }}>
+          <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 0.5 }}>Campuses</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            A campus is an optional grouping of buildings, used for organization only. Create a campus with a name and a short description.
+          </Typography>
+          {campusList.length === 0 ? (
+            <EmptyState icon={<DomainIcon />} title="No campuses yet" description="Click New Campus to create your first one." />
+          ) : (
+            <Stack spacing={1.5}>
+              {campusList.map((c) => (
+                <Paper key={c.id} variant="outlined" sx={{ borderRadius: '16px', p: 2, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                  <DomainIcon color="primary" />
+                  <Box sx={{ flex: 1, minWidth: 180 }}>
+                    <Typography fontWeight={600}>{c.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">{c.description || 'No description'}</Typography>
+                  </Box>
+                  <IconButton size="small" onClick={() => openEditCampus(c)}><EditIcon fontSize="small" /></IconButton>
+                  <IconButton size="small" color="error" onClick={() => setCmpDelId(c.id)}><DeleteIcon fontSize="small" /></IconButton>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+        </Paper>
+      )}
+
+      {/* campus create/edit dialog */}
+      <Dialog open={!!cmpDialog} onClose={() => setCmpDialog(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>{cmpDialog?.mode === 'create' ? 'New Campus' : 'Edit Campus'}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 0.5 }}>
+            <TextField autoFocus label="Campus Name" required value={cmpForm.name} onChange={(e) => setCmpForm((f) => ({ ...f, name: e.target.value }))} error={!!cmpErr} helperText={cmpErr} fullWidth />
+            <TextField label="Description" value={cmpForm.description} onChange={(e) => setCmpForm((f) => ({ ...f, description: e.target.value }))} fullWidth multiline minRows={2} />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button color="inherit" onClick={() => setCmpDialog(null)}>Cancel</Button>
+          <Button variant="contained" onClick={saveCampus}>{cmpDialog?.mode === 'create' ? 'Create' : 'Save'}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <ConfirmDialog
+        open={!!cmpDelId}
+        title="Delete campus"
+        description={`Delete ${campusToDelete?.name}? This cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        onConfirm={deleteCampus}
+        onClose={() => setCmpDelId(null)}
+      />
 
       {/* building create/edit dialog */}
       <Dialog open={!!bldDialog} onClose={() => setBldDialog(null)} maxWidth="xs" fullWidth>

@@ -8,7 +8,6 @@ import type { AppRoute, NavItem } from '../../config/navTypes';
 
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ApartmentIcon from '@mui/icons-material/Apartment';
-import DomainIcon from '@mui/icons-material/Domain';
 import PeopleIcon from '@mui/icons-material/People';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import InsightsIcon from '@mui/icons-material/Insights';
@@ -25,7 +24,6 @@ import DashboardPage from './pages/DashboardPage';
 import AssetUtilizationPage from './pages/AssetUtilizationPage';
 import ReportsPage from './pages/ReportsPage';
 import BuildingsPage from './pages/BuildingsPage';
-import CampusesPage from './pages/CampusesPage';
 import UsersPage from './pages/UsersPage';
 import UserGroupFormPage from './pages/UserGroupFormPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
@@ -53,8 +51,7 @@ export const adminRoutes: AppRoute[] = [
   { path: 'admin/asset-utilization', element: <AssetUtilizationPage /> },
   { path: 'admin/reports', element: <ReportsPage /> },
 
-  // 1.2 Building & Location Management
-  { path: 'admin/campuses', element: <CampusesPage /> },
+  // 1.2 Building & Location Management (Buildings + Campus tabs in one module)
   { path: 'admin/buildings', element: <BuildingsPage /> },
 
   // 1.3 User Management
@@ -94,8 +91,7 @@ export const adminNav: NavItem[] = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon />, roles },
   { label: 'Asset Utilization', path: '/admin/asset-utilization', icon: <InsightsIcon />, roles },
   { label: 'Reports', path: '/admin/reports', icon: <AssessmentIcon />, roles },
-  { label: 'Campuses', path: '/admin/campuses', icon: <DomainIcon />, roles },
-  { label: 'Buildings', path: '/admin/buildings', icon: <ApartmentIcon />, roles },
+  { label: 'Building Management', path: '/admin/buildings', icon: <ApartmentIcon />, roles },
   { label: 'Users & Roles', path: '/admin/users', icon: <PeopleIcon />, roles },
   // --- Asset Management group (Asset Systems / Asset Types / Assets kept adjacent) ---
   { label: 'Asset Systems', path: '/admin/asset-classification', icon: <CategoryIcon />, roles },
