@@ -21,7 +21,7 @@ import type { WorkOrder } from '../../buildingManager/data/types';
 const STATUSES = ['Pending - Unassigned', 'Assigned', 'Started', 'Completed', 'Verified', 'Closed', 'Cancelled', 'Completion Rejected', 'Verification Rejected'];
 const TYPES = ['Maintenance Scheduling', 'Ad-hoc Work', 'Service Request'];
 
-export default function AdminWorkOrdersPage() {
+export default function AdminWorkOrdersPage({ embedded = false }: { embedded?: boolean }) {
   const [search, setSearch] = useState('');
   const [bF, setBF] = useState('all');
   const [sF, setSF] = useState('all');
@@ -56,7 +56,9 @@ export default function AdminWorkOrdersPage() {
 
   return (
     <Box>
-      <PageHeader title="Work Order Management" subtitle="Portal-wide view of work orders across all buildings (read-only)." />
+      {!embedded && (
+        <PageHeader title="Work Order Management" subtitle="Portal-wide view of work orders across all buildings (read-only)." />
+      )}
       <DataTableToolbar
         search={search} onSearchChange={setSearch} searchPlaceholder="Search by WO ID, asset or description"
         filters={

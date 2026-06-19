@@ -18,7 +18,6 @@ import MapIcon from '@mui/icons-material/Map';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import EventRepeatIcon from '@mui/icons-material/EventRepeat';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
 import DashboardPage from './pages/DashboardPage';
 import AssetUtilizationPage from './pages/AssetUtilizationPage';
@@ -37,8 +36,7 @@ import DrawingsPage from './pages/DrawingsPage';
 import InventoryPage from './pages/InventoryPage';
 import SparePartDetailPage from './pages/SparePartDetailPage';
 import SparePartFormPage from './pages/SparePartFormPage';
-import AdminRequestsPage from './pages/AdminRequestsPage';
-import AdminWorkOrdersPage from './pages/AdminWorkOrdersPage';
+import AdminRequestsWorkOrdersPage from './pages/AdminRequestsWorkOrdersPage';
 import MaintenancePlansPage from './pages/MaintenancePlansPage';
 import MaintenancePlanDetailPage from './pages/MaintenancePlanDetailPage';
 import MaintenancePlanFormPage from './pages/MaintenancePlanFormPage';
@@ -76,9 +74,9 @@ export const adminRoutes: AppRoute[] = [
   { path: 'admin/inventory/parts/new', element: <SparePartFormPage /> },
   { path: 'admin/inventory/parts/:id', element: <SparePartDetailPage /> },
 
-  // Request & Work Order Management (portal-wide read-only oversight)
-  { path: 'admin/requests', element: <AdminRequestsPage /> },
-  { path: 'admin/work-orders', element: <AdminWorkOrdersPage /> },
+  // Requests & Work Orders (merged section, two tabs, portal-wide read-only oversight)
+  { path: 'admin/requests', element: <AdminRequestsWorkOrdersPage /> },
+  { path: 'admin/work-orders', element: <AdminRequestsWorkOrdersPage /> },
 
   // 1.7 Maintenance Plan Management
   { path: 'admin/maintenance-plans', element: <MaintenancePlansPage /> },
@@ -99,8 +97,7 @@ export const adminNav: NavItem[] = [
   { label: 'Assets', path: '/admin/assets', icon: <DevicesOtherIcon />, roles },
   { label: 'Drawings', path: '/admin/drawings', icon: <MapIcon />, roles },
   { label: 'Inventory', path: '/admin/inventory', icon: <Inventory2Icon />, roles },
-  { label: 'Requests', path: '/admin/requests', icon: <AssignmentIcon />, roles },
-  { label: 'Work Orders', path: '/admin/work-orders', icon: <BuildCircleIcon />, roles },
+  { label: 'Requests & Work Orders', path: '/admin/requests', match: ['/admin/work-orders'], icon: <AssignmentIcon />, roles },
   { label: 'Maintenance Plans', path: '/admin/maintenance-plans', icon: <EventRepeatIcon />, roles },
   // Account Settings intentionally NOT in nav — reachable from profile menu only.
 ];

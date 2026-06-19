@@ -20,7 +20,7 @@ import type { ServiceRequest } from '../../buildingManager/data/types';
 
 const STATUSES = ['Tenant Request', 'Pending', 'Service Request Accepted', 'Approval Rejected', 'Ad-hoc Declined', 'Cancelled', 'Closed'];
 
-export default function AdminRequestsPage() {
+export default function AdminRequestsPage({ embedded = false }: { embedded?: boolean }) {
   const [search, setSearch] = useState('');
   const [bF, setBF] = useState('all');
   const [sF, setSF] = useState('all');
@@ -52,7 +52,9 @@ export default function AdminRequestsPage() {
 
   return (
     <Box>
-      <PageHeader title="Request Management" subtitle="Portal-wide view of service and ad-hoc requests across all buildings (read-only)." />
+      {!embedded && (
+        <PageHeader title="Request Management" subtitle="Portal-wide view of service and ad-hoc requests across all buildings (read-only)." />
+      )}
       <DataTableToolbar
         search={search} onSearchChange={setSearch} searchPlaceholder="Search by ID, description or submitter"
         filters={

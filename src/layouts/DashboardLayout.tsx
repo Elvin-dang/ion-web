@@ -43,6 +43,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { useAuth } from '../contexts/AuthContext';
 import { navForRole } from '../config/routes';
 import { ROLE_LABELS } from '../config/navTypes';
+import type { NavItem } from '../config/navTypes';
 
 const DRAWER_WIDTH = 264;
 
@@ -59,12 +60,18 @@ export default function DashboardLayout() {
 
   const navItems = useMemo(() => navForRole(currentUser?.role), [currentUser?.role]);
 
+  // A nav item is active when the current path equals (or is nested under) its
+  // own path or any of its extra `match` prefixes.
+  const isNavActive = (item: NavItem) =>
+    [item.path, ...(item.match ?? [])].some(
+      (p) => location.pathname === p || location.pathname.startsWith(p + '/'),
+    );
+
   // Current page title derived from the active nav item.
   const pageTitle = useMemo(() => {
-    const active = navItems.find(
-      (n) => location.pathname === n.path || location.pathname.startsWith(n.path + '/'),
-    );
+    const active = navItems.find(isNavActive);
     return active?.label ?? 'Dashboard';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navItems, location.pathname]);
 
   const handleNav = (path: string) => {
@@ -111,9 +118,7 @@ export default function DashboardLayout() {
             <ListItemButton
               component={NavLink}
               to={item.path}
-              selected={
-                location.pathname === item.path || location.pathname.startsWith(item.path + '/')
-              }
+              selected={isNavActive(item)}
               onClick={() => setMobileOpen(false)}
             >
               <ListItemIcon>{item.icon}</ListItemIcon>
@@ -172,9 +177,7 @@ export default function DashboardLayout() {
 
   // Bottom nav: first few nav items (mobile only).
   const bottomItems = navItems.slice(0, 4);
-  const bottomValue = bottomItems.findIndex(
-    (n) => location.pathname === n.path || location.pathname.startsWith(n.path + '/'),
-  );
+  const bottomValue = bottomItems.findIndex(isNavActive);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>

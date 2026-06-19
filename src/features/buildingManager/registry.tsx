@@ -10,7 +10,6 @@ import type { AppRoute, NavItem } from '../../config/navTypes';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import GroupIcon from '@mui/icons-material/Group';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import BuildIcon from '@mui/icons-material/Build';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import EventRepeatIcon from '@mui/icons-material/EventRepeat';
@@ -19,9 +18,8 @@ import ArchitectureIcon from '@mui/icons-material/Architecture';
 import DashboardPage from './pages/DashboardPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import UsersPage from './pages/UsersPage';
-import RequestListPage from './pages/RequestListPage';
+import RequestsWorkOrdersPage from './pages/RequestsWorkOrdersPage';
 import RequestDetailPage from './pages/RequestDetailPage';
-import WorkOrderListPage from './pages/WorkOrderListPage';
 import WorkOrderDetailPage from './pages/WorkOrderDetailPage';
 import AssetListPage from './pages/AssetListPage';
 import AssetDetailPage from './pages/AssetDetailPage';
@@ -39,11 +37,10 @@ export const buildingManagerRoutes: AppRoute[] = [
   { path: 'bm/account-settings', element: <AccountSettingsPage /> },
   // 3.2 User Management
   { path: 'bm/users', element: <UsersPage /> },
-  // 3.3 Request Management
-  { path: 'bm/requests', element: <RequestListPage /> },
+  // 3.3 + 3.4 Requests & Work Orders (merged section, two tabs, shared nav entry)
+  { path: 'bm/requests', element: <RequestsWorkOrdersPage /> },
   { path: 'bm/requests/:id', element: <RequestDetailPage /> },
-  // 3.4 Work Order Management
-  { path: 'bm/work-orders', element: <WorkOrderListPage /> },
+  { path: 'bm/work-orders', element: <RequestsWorkOrdersPage /> },
   { path: 'bm/work-orders/:id', element: <WorkOrderDetailPage /> },
   // 3.5 Asset Management
   { path: 'bm/assets', element: <AssetListPage /> },
@@ -63,8 +60,13 @@ export const buildingManagerRoutes: AppRoute[] = [
 export const buildingManagerNav: NavItem[] = [
   { label: 'Dashboard', path: '/bm/dashboard', icon: <DashboardIcon />, roles: ['building_manager'] },
   { label: 'Users', path: '/bm/users', icon: <GroupIcon />, roles: ['building_manager'] },
-  { label: 'Requests', path: '/bm/requests', icon: <AssignmentIcon />, roles: ['building_manager'] },
-  { label: 'Work Orders', path: '/bm/work-orders', icon: <BuildIcon />, roles: ['building_manager'] },
+  {
+    label: 'Requests & Work Orders',
+    path: '/bm/requests',
+    match: ['/bm/work-orders'],
+    icon: <AssignmentIcon />,
+    roles: ['building_manager'],
+  },
   { label: 'Assets', path: '/bm/assets', icon: <PrecisionManufacturingIcon />, roles: ['building_manager'] },
   { label: 'Drawings', path: '/bm/drawings', icon: <ArchitectureIcon />, roles: ['building_manager'] },
   { label: 'Inventory', path: '/bm/spare-parts', icon: <Inventory2Icon />, roles: ['building_manager'] },

@@ -27,6 +27,13 @@ export interface NavItem {
   roles: Role[];
   /** Optional i18n key; falls back to `label` if missing. */
   i18nKey?: string;
+  /**
+   * Extra absolute path prefixes that should also mark this item active /
+   * supply the page title (e.g. a merged section whose tabs live under
+   * sibling paths). Each entry matches the path exactly or as a `path + '/'`
+   * prefix, same as the item's own `path`.
+   */
+  match?: string[];
 }
 
 /** Human-readable labels for each role (badges, menus). */

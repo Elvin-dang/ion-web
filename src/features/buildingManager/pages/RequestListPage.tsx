@@ -47,7 +47,7 @@ function reqGroup(status: RequestStatus): KanbanGroup {
 
 const buildingName = (id: string) => buildings.find((b) => b.id === id)?.name ?? id;
 
-export default function RequestListPage() {
+export default function RequestListPage({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [view, setView] = useState<'table' | 'kanban'>('table');
@@ -107,28 +107,34 @@ export default function RequestListPage() {
     group: reqGroup(r.status),
   }));
 
+  const viewToggle = (
+    <ToggleButtonGroup
+      exclusive
+      size="small"
+      value={view}
+      onChange={(_, v) => v && setView(v)}
+      sx={{ '& .MuiToggleButton-root': { borderRadius: 8, px: 2 } }}
+    >
+      <ToggleButton value="table">
+        <ViewListIcon fontSize="small" sx={{ mr: 0.5 }} /> Table
+      </ToggleButton>
+      <ToggleButton value="kanban">
+        <ViewKanbanIcon fontSize="small" sx={{ mr: 0.5 }} /> Kanban
+      </ToggleButton>
+    </ToggleButtonGroup>
+  );
+
   return (
     <Box>
-      <PageHeader
-        title="Requests"
-        subtitle="Tenant and ad-hoc work order requests for your buildings"
-        action={
-          <ToggleButtonGroup
-            exclusive
-            size="small"
-            value={view}
-            onChange={(_, v) => v && setView(v)}
-            sx={{ '& .MuiToggleButton-root': { borderRadius: 8, px: 2 } }}
-          >
-            <ToggleButton value="table">
-              <ViewListIcon fontSize="small" sx={{ mr: 0.5 }} /> Table
-            </ToggleButton>
-            <ToggleButton value="kanban">
-              <ViewKanbanIcon fontSize="small" sx={{ mr: 0.5 }} /> Kanban
-            </ToggleButton>
-          </ToggleButtonGroup>
-        }
-      />
+      {embedded ? (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>{viewToggle}</Box>
+      ) : (
+        <PageHeader
+          title="Requests"
+          subtitle="Tenant and ad-hoc work order requests for your buildings"
+          action={viewToggle}
+        />
+      )}
 
       <DataTableToolbar
         search={search}

@@ -54,7 +54,7 @@ function woGroup(status: WorkOrderStatus): KanbanGroup {
   }
 }
 
-export default function WorkOrderListPage() {
+export default function WorkOrderListPage({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const initStatus = params.get('status');
@@ -157,28 +157,34 @@ export default function WorkOrderListPage() {
     overdue: w.overdue,
   }));
 
+  const viewToggle = (
+    <ToggleButtonGroup
+      exclusive
+      size="small"
+      value={view}
+      onChange={(_, v) => v && setView(v)}
+      sx={{ '& .MuiToggleButton-root': { borderRadius: 8, px: 2 } }}
+    >
+      <ToggleButton value="table">
+        <ViewListIcon fontSize="small" sx={{ mr: 0.5 }} /> Table
+      </ToggleButton>
+      <ToggleButton value="kanban">
+        <ViewKanbanIcon fontSize="small" sx={{ mr: 0.5 }} /> Kanban
+      </ToggleButton>
+    </ToggleButtonGroup>
+  );
+
   return (
     <Box>
-      <PageHeader
-        title="Work Orders"
-        subtitle="Track and sign off work orders across your buildings"
-        action={
-          <ToggleButtonGroup
-            exclusive
-            size="small"
-            value={view}
-            onChange={(_, v) => v && setView(v)}
-            sx={{ '& .MuiToggleButton-root': { borderRadius: 8, px: 2 } }}
-          >
-            <ToggleButton value="table">
-              <ViewListIcon fontSize="small" sx={{ mr: 0.5 }} /> Table
-            </ToggleButton>
-            <ToggleButton value="kanban">
-              <ViewKanbanIcon fontSize="small" sx={{ mr: 0.5 }} /> Kanban
-            </ToggleButton>
-          </ToggleButtonGroup>
-        }
-      />
+      {embedded ? (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>{viewToggle}</Box>
+      ) : (
+        <PageHeader
+          title="Work Orders"
+          subtitle="Track and sign off work orders across your buildings"
+          action={viewToggle}
+        />
+      )}
 
       <DataTableToolbar
         search={search}
